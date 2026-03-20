@@ -1,0 +1,207 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+==========================================================================
+【AI HANDOVER NOTE】
+1. DESIGN PHILOSOPHY:
+   - Quiet Luxury meets Financial Authority: Este sistema está diseñado para LUAL Real Estate como una firma de inversión patrimonial premium, no como un portal inmobiliario masivo. La filosofía central es 'Warm Modern Minimalism' — paletas terrosas y apagadas que transmiten seriedad, confianza y sofisticación sin frialdad corporativa.
+   - Visual Style: Inspirado en publicaciones editoriales de arquitectura y firmas de wealth management. Uso generoso de whitespace, texturas sutiles (ruido de papel, gradientes orgánicos), y jerarquía tipográfica fuerte. El diseño debe sentirse como una revista de inversión patrimonial, no como un marketplace de propiedades.
+   - Rationale: El mercado de remates bancarios en México enfrenta desconfianza estructural. Este sistema visual eleva la percepción de marca, filtra curiosos, y posiciona a LUAL como autoridad en inversión inmobiliaria. Cada decisión cromática y tipográfica refuerza confianza, claridad procesal y exclusividad.
+
+2. TYPOGRAPHY:
+   - Sans (Inter): Elegida por su neutralidad profesional, excelente legibilidad en pantalla, y versatilidad para UI/UX financiero. Pesos 400-700 permiten jerarquía clara sin perder cohesión. Su geometría humanista transmite accesibilidad sin sacrificar seriedad.
+   - Display (Cormorant Garamond): Serif elegante para headings principales y secciones editoriales. Aporta sofisticación, herencia editorial, y contraste visual contra Inter. Uso estratégico en hero sections, títulos de casos de éxito, y contenido educativo premium.
+   - Mono (JetBrains Mono): Para datos financieros, cifras de inversión, códigos de propiedad, y tablas comparativas. Refuerza precisión técnica y transparencia en información crítica.
+
+3. COLOR SYSTEM (LUAL BRAND):
+   - Brand Core (Azul Corporativo LUAL): Paleta basada en el logo oficial de LUAL Real Estate. Azul primario #1145AE (azul corporativo profundo) como base para --primary en CTAs y elementos principales. Azul secundario #00A0E9 (cian brillante) para --accent y highlights estratégicos. Azul terciario #1F5796 (azul grisáceo) para elementos secundarios. Esta paleta transmite confianza, profesionalismo y modernidad corporativa.
+   - Semantic Colors: --success (Hue 200, azul-verde corporativo) para oportunidades verificadas y procesos completados. --warning (Hue 45, ámbar) para alertas legales y disclaimers. --destructive (Hue 15, rojo corporativo) para errores críticos.
+   - Neutrals Strategy: Grises neutros fríos para texto y backgrounds. Light mode usa gris muy claro (L 0.97) en lugar de blanco puro, creando atmósfera corporativa limpia. Dark mode usa gris oscuro (L 0.12) para reducir fatiga visual.
+   - Contrast & Accessibility: Todos los pares foreground/background cumplen WCAG 2.1 AA. Acentos de color usados estratégicamente para guiar atención sin saturar.
+
+4. USAGE GUIDE:
+   - Layout Type: Centered container (max-width 1280px) con generous padding. Secciones hero full-width con overlays sutiles. Cards con sombras suaves y bordes apenas perceptibles para crear 'floating surfaces' sin perder elegancia.
+   - Effects Recommendations: Backdrop-blur mínimo (4-8px) en modals y popovers para mantener legibilidad. Texturas de ruido sutil (opacity 0.02-0.03) en backgrounds principales. Gradientes orgánicos en hero sections (linear-gradient con stops suaves). Evitar glassmorphism excesivo — priorizar claridad.
+   - Component Patterns: Buttons con border-radius moderado (--radius: 0.75rem), sin sombras agresivas. Forms con labels flotantes, inputs con border sutil que se intensifica en focus. Tables con row hover states sutiles. Badges de confianza con iconografía minimalista.
+   - Content Hierarchy: Hero con Cormorant Garamond (48-64px), subheadings con Inter Semi-Bold (24-32px), body con Inter Regular (16-18px, line-height 1.6). Uso estratégico de color para destacar cifras y CTAs sin romper flujo visual.
+   - Project-Specific Rules: Usar azules corporativos de LUAL (#1145AE, #00A0E9, #1F5796) consistentemente. Evitar stock photography genérico — preferir fotografía arquitectónica profesional con tratamiento editorial. Disclaimers legales en JetBrains Mono para reforzar transparencia. Secciones educativas con iconografía line-art, no filled icons.
+==========================================================================
+*/
+
+:root {
+  /* Typography */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: JetBrains Mono, 'Courier New', monospace;
+  
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Core UI Tokens - LUAL Brand Colors (HEX) */
+  --background: #F8F9FA;
+  --foreground: #1F2937;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --popover: #FFFFFF;
+  --popover-foreground: #1F2937;
+  --primary: #1145AE;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E5E7EB;
+  --secondary-foreground: #1F5796;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #00A0E9;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #1145AE;
+  
+  /* Chart Tokens - LUAL Brand */
+  --chart-1: #1145AE;
+  --chart-2: #00A0E9;
+  --chart-3: #1F5796;
+  --chart-4: #3B82F6;
+  --chart-5: #60A5FA;
+  
+  /* Sidebar Tokens - LUAL Brand */
+  --sidebar: #F8F9FA;
+  --sidebar-foreground: #1F2937;
+  --sidebar-primary: #1145AE;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E5E7EB;
+  --sidebar-accent-foreground: #1F5796;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #1145AE;
+}
+
+.dark {
+  --background: #1F2937;
+  --foreground: #F9FAFB;
+  --card: #374151;
+  --card-foreground: #F9FAFB;
+  --popover: #374151;
+  --popover-foreground: #F9FAFB;
+  --primary: #3B82F6;
+  --primary-foreground: #FFFFFF;
+  --secondary: #4B5563;
+  --secondary-foreground: #F9FAFB;
+  --muted: #4B5563;
+  --muted-foreground: #D1D5DB;
+  --accent: #60A5FA;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #4B5563;
+  --input: #4B5563;
+  --ring: #3B82F6;
+  
+  /* Chart Tokens - Dark Mode */
+  --chart-1: #3B82F6;
+  --chart-2: #60A5FA;
+  --chart-3: #1F5796;
+  --chart-4: #93C5FD;
+  --chart-5: #BFDBFE;
+  
+  /* Sidebar Tokens - Dark Mode */
+  --sidebar: #1F2937;
+  --sidebar-foreground: #F9FAFB;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #4B5563;
+  --sidebar-accent-foreground: #F9FAFB;
+  --sidebar-border: #4B5563;
+  --sidebar-ring: #3B82F6;
+}
+
+@theme inline {
+  /* LUAL Brand Colors - Direct HEX */
+  --color-background: #F8F9FA;
+  --color-foreground: #1F2937;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1F2937;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #1F2937;
+  --color-primary: #1145AE;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #E5E7EB;
+  --color-secondary-foreground: #1F5796;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-accent: #00A0E9;
+  --color-accent-foreground: #FFFFFF;
+  --color-destructive: #DC2626;
+  --color-destructive-foreground: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-input: #E5E7EB;
+  --color-ring: #1145AE;
+
+  /* Charts Mapping */
+  --color-chart-1: #1145AE;
+  --color-chart-2: #00A0E9;
+  --color-chart-3: #1F5796;
+  --color-chart-4: #3B82F6;
+  --color-chart-5: #60A5FA;
+
+  /* Sidebar Mapping */
+  --color-sidebar: #F8F9FA;
+  --color-sidebar-foreground: #1F2937;
+  --color-sidebar-primary: #1145AE;
+  --color-sidebar-primary-foreground: #FFFFFF;
+  --color-sidebar-accent: #E5E7EB;
+  --color-sidebar-accent-foreground: #1F5796;
+  --color-sidebar-border: #E5E7EB;
+  --color-sidebar-ring: #1145AE;
+
+  /* Typography */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: JetBrains Mono, 'Courier New', monospace;
+
+  /* Radius */
+  --radius-lg: 0.75rem;
+  --radius-md: calc(0.75rem - 2px);
+  --radius-sm: calc(0.75rem - 4px);
+  --radius-xl: calc(0.75rem + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans min-h-screen;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
+  }
+}
