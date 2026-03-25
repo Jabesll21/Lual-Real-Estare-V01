@@ -7,7 +7,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { PropertyCard } from '@/components/PropertyCard';
 import { TestimonialCard } from '@/components/TestimonialCard';
 import { ROUTE_PATHS, formatPrice } from '@/lib/index';
-import { properties } from '@/data/properties';
+import { useEffect, useState } from 'react';
+import { getFeaturedProperties } from '@/api/properties';
 import { faqCategories } from '@/data/faq';
 import { testimonials } from '@/data/testimonials';
 import { IMAGES } from '@/assets/images';
@@ -27,7 +28,11 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const featuredProperties = properties.filter(p => p.featured).slice(0, 3);
+  const [featuredProperties, setFeaturedProperties] = useState<any[]>([])
+
+useEffect(() => {
+  getFeaturedProperties().then(setFeaturedProperties)
+}, [])
   const quickFAQ = faqCategories[0].items.slice(0, 5);
   const featuredTestimonials = testimonials.slice(0, 3);
 

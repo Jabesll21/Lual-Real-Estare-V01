@@ -1,7 +1,4 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,29 +8,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { DiagnosisFormData, INVESTMENT_RANGES, validateWhatsApp } from '@/lib/index'
-
-const step1Schema = z.object({
-  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  whatsapp: z.string().refine(validateWhatsApp, 'Número de WhatsApp inválido (10-13 dígitos)'),
-})
-
-const step2Schema = z.object({
-  hasCapital: z.enum(['yes', 'no', 'not-sure']),
-  investmentRange: z.string().min(1, 'Selecciona un rango de inversión'),
-  hasInvestedBefore: z.enum(['yes', 'no']),
-})
-
-const step3Schema = z.object({
-  timeHorizon: z.enum(['0-6', '6-12', '12-24', '24+']),
-  cityInterest: z.enum(['tijuana', 'cdmx', 'both']),
-})
-
-const fullSchema = step1Schema.merge(step2Schema).merge(step3Schema)
-
-type Step1Data = z.infer<typeof step1Schema>
-type Step2Data = z.infer<typeof step2Schema>
-type Step3Data = z.infer<typeof step3Schema>
+import { INVESTMENT_RANGES } from '@/lib/index'
+import { submitDiagnosis } from '@/api/submissions'
 
 interface DiagnosisFormProps {
   onSuccess?: () => void
@@ -42,49 +18,91 @@ interface DiagnosisFormProps {
 export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [showNoCapitalWarning, setShowNoCapitalWarning] = useState(false)
 
-  const form = useForm<DiagnosisFormData>({
-    resolver: zodResolver(
-      currentStep === 1 ? step1Schema : currentStep === 2 ? step2Schema : step3Schema
-    ),
-    mode: 'onChange',
+  // Estado del formulario controlado manualmente
+  const [formData, setFormData] = useState({
+    name: '',
+    whatsapp: '',
+    hasCapital: '',
+    investmentRange: '',
+    hasInvestedBefore: '',
+    timeHorizon: '',
+    cityInterest: '',
   })
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = form
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const hasCapital = watch('hasCapital')
-  const investmentRange = watch('investmentRange')
-  const hasInvestedBefore = watch('hasInvestedBefore')
-  const timeHorizon = watch('timeHorizon')
-  const cityInterest = watch('cityInterest')
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => ({ ...prev, [field]: '' }))
+  }
 
-  const handleNext = async () => {
-    const isValid = await form.trigger()
-    if (!isValid) return
-
-    if (currentStep === 2 && hasCapital === 'no') {
-      setShowNoCapitalWarning(true)
-      return
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.name || formData.name.length < 2) {
+      newErrors.name = 'El nombre debe tener al menos 2 caracteres'
     }
-
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1)
-      setShowNoCapitalWarning(false)
+    const cleaned = formData.whatsapp.replace(/\D/g, '')
+    if (!cleaned || cleaned.length < 10 || cleaned.length > 13) {
+      newErrors.whatsapp = 'Número de WhatsApp inválido (10-13 dígitos)'
     }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.hasCapital) newErrors.hasCapital = 'Selecciona una opción'
+    if (!formData.investmentRange) newErrors.investmentRange = 'Selecciona un rango'
+    if (!formData.hasInvestedBefore) newErrors.hasInvestedBefore = 'Selecciona una opción'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateStep3 = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.timeHorizon) newErrors.timeHorizon = 'Selecciona una opción'
+    if (!formData.cityInterest) newErrors.cityInterest = 'Selecciona una ciudad'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleNext = () => {
+    if (currentStep === 1 && !validateStep1()) return
+    if (currentStep === 2) {
+      if (!validateStep2()) return
+      if (formData.hasCapital === 'no') {
+        setShowNoCapitalWarning(true)
+        return
+      }
+    }
+    setCurrentStep(prev => prev + 1)
+    setShowNoCapitalWarning(false)
   }
 
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-      setShowNoCapitalWarning(false)
-    }
+    setCurrentStep(prev => prev - 1)
+    setShowNoCapitalWarning(false)
   }
 
-  const onSubmit = (data: DiagnosisFormData) => {
-    console.log('Diagnosis form submitted:', data)
-    setIsSubmitted(true)
-    onSuccess?.()
+  const handleSubmit = async () => {
+    if (!validateStep3()) return
+
+    console.log('Enviando datos:', formData)
+    setIsLoading(true)
+
+    try {
+      await submitDiagnosis(formData)
+      setIsSubmitted(true)
+      onSuccess?.()
+    } catch (error) {
+      console.error('Error al enviar:', error)
+      alert('Hubo un error al enviar el formulario. Por favor intenta de nuevo.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const progressPercentage = (currentStep / 3) * 100
@@ -106,19 +124,16 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
           </motion.div>
           <h3 className="text-2xl font-semibold mb-3">¡Diagnóstico enviado!</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Gracias por tu interés. Nuestro equipo revisará tu perfil y te contactará por WhatsApp en las próximas 48 horas con oportunidades que coincidan con tu búsqueda.
+            Gracias por tu interés. Nuestro equipo revisará tu perfil y te contactará por WhatsApp en las próximas 48 horas.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => window.location.href = 'https://wa.me/526641234567?text=Hola%2C%20acabo%20de%20completar%20el%20diagn%C3%B3stico'}
+              onClick={() => window.open('https://wa.me/526632007261?text=Hola%2C%20acabo%20de%20completar%20el%20diagn%C3%B3stico')}
               className="gap-2"
             >
               Contactar por WhatsApp
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/#oportunidades'}
-            >
+            <Button variant="outline" onClick={() => window.location.href = '/#oportunidades'}>
               Ver Oportunidades
             </Button>
           </div>
@@ -129,6 +144,7 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {/* Barra de progreso */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-muted-foreground">Paso {currentStep} de 3</span>
@@ -153,44 +169,43 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
           transition={{ duration: 0.3 }}
         >
           <Card className="p-8">
+
+            {/* PASO 1 */}
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-2xl font-semibold mb-2">Datos de contacto</h3>
                   <p className="text-muted-foreground">Comencemos con tu información básica</p>
                 </div>
-
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-base">Nombre completo</Label>
                     <Input
                       id="name"
-                      {...register('name')}
+                      value={formData.name}
+                      onChange={(e) => updateField('name', e.target.value)}
                       placeholder="Juan Pérez"
                       className="h-12 text-base"
                     />
-                    {errors.name && (
-                      <p className="text-sm text-destructive">{errors.name.message}</p>
-                    )}
+                    {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="whatsapp" className="text-base">WhatsApp</Label>
                     <Input
                       id="whatsapp"
-                      {...register('whatsapp')}
+                      value={formData.whatsapp}
+                      onChange={(e) => updateField('whatsapp', e.target.value)}
                       placeholder="6641234567"
                       className="h-12 text-base"
                     />
-                    {errors.whatsapp && (
-                      <p className="text-sm text-destructive">{errors.whatsapp.message}</p>
-                    )}
+                    {errors.whatsapp && <p className="text-sm text-destructive">{errors.whatsapp}</p>}
                     <p className="text-xs text-muted-foreground">Incluye código de país si estás fuera de México</p>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* PASO 2 */}
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div>
@@ -202,7 +217,7 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Los remates bancarios requieren pago de contado. Si no cuentas con capital disponible, te recomendamos explorar otras opciones de financiamiento antes de continuar.
+                      Los remates bancarios requieren pago de contado. Si no cuentas con capital disponible, te recomendamos explorar otras opciones antes de continuar.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -211,31 +226,28 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
                   <div className="space-y-3">
                     <Label className="text-base">¿Tienes capital disponible para pago de contado?</Label>
                     <RadioGroup
-                      value={hasCapital}
-                      onValueChange={(value) => setValue('hasCapital', value as 'yes' | 'no' | 'not-sure')}
+                      value={formData.hasCapital}
+                      onValueChange={(value) => updateField('hasCapital', value)}
                     >
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="yes" id="capital-yes" />
-                        <Label htmlFor="capital-yes" className="flex-1 cursor-pointer font-normal">Sí, tengo capital disponible</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="not-sure" id="capital-not-sure" />
-                        <Label htmlFor="capital-not-sure" className="flex-1 cursor-pointer font-normal">No estoy seguro</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="no" id="capital-no" />
-                        <Label htmlFor="capital-no" className="flex-1 cursor-pointer font-normal">No, necesito financiamiento</Label>
-                      </div>
+                      {[
+                        { value: 'yes', label: 'Sí, tengo capital disponible' },
+                        { value: 'no', label: 'No, necesito financiamiento' },
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={option.value} id={`capital-${option.value}`} />
+                          <Label htmlFor={`capital-${option.value}`} className="flex-1 cursor-pointer font-normal">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
-                    {errors.hasCapital && (
-                      <p className="text-sm text-destructive">{errors.hasCapital.message}</p>
-                    )}
+                    {errors.hasCapital && <p className="text-sm text-destructive">{errors.hasCapital}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="investmentRange" className="text-base">Rango de inversión</Label>
-                    <Select value={investmentRange} onValueChange={(value) => setValue('investmentRange', value)}>
-                      <SelectTrigger id="investmentRange" className="h-12 text-base">
+                    <Label className="text-base">Rango de inversión</Label>
+                    <Select value={formData.investmentRange} onValueChange={(value) => updateField('investmentRange', value)}>
+                      <SelectTrigger className="h-12 text-base">
                         <SelectValue placeholder="Selecciona un rango" />
                       </SelectTrigger>
                       <SelectContent>
@@ -246,129 +258,115 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.investmentRange && (
-                      <p className="text-sm text-destructive">{errors.investmentRange.message}</p>
-                    )}
+                    {errors.investmentRange && <p className="text-sm text-destructive">{errors.investmentRange}</p>}
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="text-base">¿Has invertido en bienes raíces antes?</Label>
+                    <Label className="text-base">¿Has invertido en Remates hipotecarios antes?</Label>
                     <RadioGroup
-                      value={hasInvestedBefore}
-                      onValueChange={(value) => setValue('hasInvestedBefore', value as 'yes' | 'no')}
+                      value={formData.hasInvestedBefore}
+                      onValueChange={(value) => updateField('hasInvestedBefore', value)}
                     >
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="yes" id="invested-yes" />
-                        <Label htmlFor="invested-yes" className="flex-1 cursor-pointer font-normal">Sí, tengo experiencia</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="no" id="invested-no" />
-                        <Label htmlFor="invested-no" className="flex-1 cursor-pointer font-normal">No, sería mi primera inversión</Label>
-                      </div>
+                      {[
+                        { value: 'yes', label: 'Sí, tengo experiencia' },
+                        { value: 'no', label: 'No, sería mi primera inversión' },
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={option.value} id={`invested-${option.value}`} />
+                          <Label htmlFor={`invested-${option.value}`} className="flex-1 cursor-pointer font-normal">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
-                    {errors.hasInvestedBefore && (
-                      <p className="text-sm text-destructive">{errors.hasInvestedBefore.message}</p>
-                    )}
+                    {errors.hasInvestedBefore && <p className="text-sm text-destructive">{errors.hasInvestedBefore}</p>}
                   </div>
                 </div>
               </div>
             )}
 
+            {/* PASO 3 */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
                   <h3 className="text-2xl font-semibold mb-2">Intención de inversión</h3>
                   <p className="text-muted-foreground">Últimos detalles para personalizar tu diagnóstico</p>
                 </div>
-
                 <div className="space-y-4">
                   <div className="space-y-3">
                     <Label className="text-base">Horizonte temporal</Label>
                     <RadioGroup
-                      value={timeHorizon}
-                      onValueChange={(value) => setValue('timeHorizon', value as '0-6' | '6-12' | '12-24' | '24+')}
+                      value={formData.timeHorizon}
+                      onValueChange={(value) => updateField('timeHorizon', value)}
                     >
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="0-6" id="horizon-0-6" />
-                        <Label htmlFor="horizon-0-6" className="flex-1 cursor-pointer font-normal">0-6 meses (urgente)</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="6-12" id="horizon-6-12" />
-                        <Label htmlFor="horizon-6-12" className="flex-1 cursor-pointer font-normal">6-12 meses</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="12-24" id="horizon-12-24" />
-                        <Label htmlFor="horizon-12-24" className="flex-1 cursor-pointer font-normal">12-24 meses</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="24+" id="horizon-24+" />
-                        <Label htmlFor="horizon-24+" className="flex-1 cursor-pointer font-normal">Más de 24 meses (flexible)</Label>
-                      </div>
+                      {[
+                        { value: '0-6', label: '0-6 meses (urgente)' },
+                        { value: '6-12', label: '6-12 meses' },
+                        { value: '12-24', label: '12-24 meses' },
+                        { value: '24+', label: 'Más de 24 meses (flexible)' },
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={option.value} id={`horizon-${option.value}`} />
+                          <Label htmlFor={`horizon-${option.value}`} className="flex-1 cursor-pointer font-normal">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
-                    {errors.timeHorizon && (
-                      <p className="text-sm text-destructive">{errors.timeHorizon.message}</p>
-                    )}
+                    {errors.timeHorizon && <p className="text-sm text-destructive">{errors.timeHorizon}</p>}
                   </div>
 
                   <div className="space-y-3">
                     <Label className="text-base">Ciudad de interés</Label>
                     <RadioGroup
-                      value={cityInterest}
-                      onValueChange={(value) => setValue('cityInterest', value as 'tijuana' | 'cdmx' | 'both')}
+                      value={formData.cityInterest}
+                      onValueChange={(value) => updateField('cityInterest', value)}
                     >
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="tijuana" id="city-tijuana" />
-                        <Label htmlFor="city-tijuana" className="flex-1 cursor-pointer font-normal">Tijuana</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="cdmx" id="city-cdmx" />
-                        <Label htmlFor="city-cdmx" className="flex-1 cursor-pointer font-normal">Ciudad de México</Label>
-                      </div>
-                      <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <RadioGroupItem value="both" id="city-both" />
-                        <Label htmlFor="city-both" className="flex-1 cursor-pointer font-normal">Ambas ciudades</Label>
-                      </div>
+                      {[
+                        { value: 'tijuana', label: 'Tijuana' },
+                        { value: 'cdmx', label: 'Ciudad de México' },
+                        { value: 'both', label: 'Ambas ciudades' },
+                      ].map((option) => (
+                        <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                          <RadioGroupItem value={option.value} id={`city-${option.value}`} />
+                          <Label htmlFor={`city-${option.value}`} className="flex-1 cursor-pointer font-normal">
+                            {option.label}
+                          </Label>
+                        </div>
+                      ))}
                     </RadioGroup>
-                    {errors.cityInterest && (
-                      <p className="text-sm text-destructive">{errors.cityInterest.message}</p>
-                    )}
+                    {errors.cityInterest && <p className="text-sm text-destructive">{errors.cityInterest}</p>}
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Botones de navegación */}
             <div className="flex gap-3 mt-8">
               {currentStep > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleBack}
-                  className="gap-2"
-                >
+                <Button type="button" variant="outline" onClick={handleBack} className="gap-2">
                   <ChevronLeft className="w-4 h-4" />
                   Anterior
                 </Button>
               )}
               {currentStep < 3 ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 gap-2"
-                >
+                <Button type="button" onClick={handleNext} className="flex-1 gap-2">
                   Siguiente
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  onClick={handleSubmit(onSubmit)}
+                  onClick={handleSubmit}
+                  disabled={isLoading}
                   className="flex-1 gap-2"
                 >
-                  Enviar Diagnóstico
+                  {isLoading ? 'Enviando...' : 'Enviar Diagnóstico'}
                   <CheckCircle2 className="w-4 h-4" />
                 </Button>
               )}
             </div>
+
           </Card>
         </motion.div>
       </AnimatePresence>

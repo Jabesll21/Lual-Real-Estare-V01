@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Search, Filter, MapPin, Home, Building2, Store, Landmark } from 'lucide-react';
-import { Property, ROUTE_PATHS, formatPrice, formatDiscount } from '@/lib/index';
-import { properties } from '@/data/properties';
+import { Property, ROUTE_PATHS } from '@/lib/index';
+import { getProperties } from '@/api/properties';
 import { PropertyCard } from '@/components/PropertyCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,12 +25,21 @@ export default function Opportunities() {
   const [typeFilter, setTypeFilter] = useState<PropertyTypeFilter>('all');
   const [priceFilter, setPriceFilter] = useState<PriceRangeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loadingProperties, setLoadingProperties] = useState(true)
+
+  useEffect(() => {
+    getProperties().then((data) => {
+      setProperties(data)
+      setLoadingProperties(false)
+    })
+  }, [])
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) => {
       if (cityFilter !== 'all' && property.city !== cityFilter) return false;
       if (typeFilter !== 'all' && property.type !== typeFilter) return false;
-      
+
       if (priceFilter !== 'all') {
         const price = property.auctionPrice;
         switch (priceFilter) {
@@ -60,14 +69,7 @@ export default function Opportunities() {
 
       return true;
     });
-  }, [cityFilter, typeFilter, priceFilter, searchQuery]);
-
-  const propertyTypeIcons = {
-    Casa: Home,
-    Departamento: Building2,
-    Terreno: Landmark,
-    'Local Comercial': Store,
-  };
+  }, [properties, cityFilter, typeFilter, priceFilter, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -199,7 +201,12 @@ export default function Opportunities() {
 
       <section className="py-16">
         <div className="container mx-auto px-4">
-          {filteredProperties.length === 0 ? (
+          {loadingProperties ? (
+            <div className="text-center py-16">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Cargando propiedades...</p>
+            </div>
+          ) : filteredProperties.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

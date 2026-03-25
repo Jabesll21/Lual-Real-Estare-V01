@@ -17,7 +17,7 @@ export type LegalStage =
 
 export const LEGAL_STAGES: Record<LegalStage, { label: string; color: string }> = {
   adjudicacion: {
-    label: 'Adjudicación',
+    label: 'SENTENCIA',
     color: 'bg-accent/10 text-accent border-accent/20',
   },
   remate: {
