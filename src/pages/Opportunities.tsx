@@ -18,7 +18,10 @@ import { Badge } from '@/components/ui/badge';
 
 type CityFilter = 'all' | 'Tijuana' | 'CDMX';
 type PropertyTypeFilter = 'all' | 'Casa' | 'Departamento' | 'Terreno' | 'Local Comercial';
-type PriceRangeFilter = 'all' | '0-2m' | '2m-5m' | '5m-10m' | '10m+';
+type PriceRangeFilter = 'all' | '0-500k' | '500k-1m' | '1m-2m' | '2m-5m' | '5m-10m' | '10m+';
+type LegalStageFilter = 'all' | 'adjudicacion' | 'remate' | 'dacion' | 'preventa' | 
+  'escrituracion' | 'etapa_inicial' | 'ejecucion_sentencia' | 'desahogo_pruebas' | 
+  'emplazamiento' | 'entrega_inmediata' | 'dacion_pagos'
 
 export default function Opportunities() {
   const [cityFilter, setCityFilter] = useState<CityFilter>('all');
@@ -27,6 +30,7 @@ export default function Opportunities() {
   const [searchQuery, setSearchQuery] = useState('');
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
+  const [legalFilter, setLegalFilter] = useState<LegalStageFilter>('all')
 
   useEffect(() => {
     getProperties().then((data) => {
@@ -39,23 +43,30 @@ export default function Opportunities() {
     return properties.filter((property) => {
       if (cityFilter !== 'all' && property.city !== cityFilter) return false;
       if (typeFilter !== 'all' && property.type !== typeFilter) return false;
+      if (legalFilter !== 'all' && property.legalStage !== legalFilter) return false;
 
       if (priceFilter !== 'all') {
         const price = property.auctionPrice;
-        switch (priceFilter) {
-          case '0-2m':
-            if (price >= 2000000) return false;
-            break;
-          case '2m-5m':
-            if (price < 2000000 || price >= 5000000) return false;
-            break;
-          case '5m-10m':
-            if (price < 5000000 || price >= 10000000) return false;
-            break;
-          case '10m+':
-            if (price < 10000000) return false;
-            break;
-        }
+       switch (priceFilter) {
+  case '0-500k':
+    if (price >= 500000) return false;
+    break;
+  case '500k-1m':
+    if (price < 500000 || price >= 1000000) return false;
+    break;
+  case '1m-2m':
+    if (price < 1000000 || price >= 2000000) return false;
+    break;
+  case '2m-5m':
+    if (price < 2000000 || price >= 5000000) return false;
+    break;
+  case '5m-10m':
+    if (price < 5000000 || price >= 10000000) return false;
+    break;
+  case '10m+':
+    if (price < 10000000) return false;
+    break;
+}
       }
 
       if (searchQuery) {
@@ -69,11 +80,11 @@ export default function Opportunities() {
 
       return true;
     });
-  }, [properties, cityFilter, typeFilter, priceFilter, searchQuery]);
+  }, [properties, cityFilter, typeFilter, legalFilter, priceFilter, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative py-24 bg-gradient-to-b from-muted/30 to-background">
+      <section className="relative py-24 bg-linear-to-b from-muted/30 to-background">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -180,18 +191,43 @@ export default function Opportunities() {
               </div>
 
               <div className="flex-1">
+  <label className="block text-sm font-medium mb-2">Etapa jurídica</label>
+  <Select value={legalFilter} onValueChange={(v) => setLegalFilter(v as LegalStageFilter)}>
+    <SelectTrigger>
+      <SelectValue placeholder="Todas las etapas" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="all">Todas las etapas</SelectItem>
+      <SelectItem value="adjudicacion">Adjudicación</SelectItem>
+      <SelectItem value="remate">Remate</SelectItem>
+      <SelectItem value="dacion">Dación en Pago</SelectItem>
+      <SelectItem value="preventa">Preventa</SelectItem>
+      <SelectItem value="escrituracion">Escrituración</SelectItem>
+      <SelectItem value="etapa_inicial">Etapa Inicial</SelectItem>
+      <SelectItem value="ejecucion_sentencia">Ejecución de Sentencia</SelectItem>
+      <SelectItem value="desahogo_pruebas">Desahogo de Pruebas</SelectItem>
+      <SelectItem value="emplazamiento">Emplazamiento</SelectItem>
+      <SelectItem value="entrega_inmediata">Entrega Inmediata</SelectItem>
+      <SelectItem value="dacion_pagos">Dación en Pagos</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
+
+              <div className="flex-1">
                 <label className="block text-sm font-medium mb-2">Rango de precio</label>
                 <Select value={priceFilter} onValueChange={(v) => setPriceFilter(v as PriceRangeFilter)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todos los precios" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los precios</SelectItem>
-                    <SelectItem value="0-2m">Hasta $2M MXN</SelectItem>
-                    <SelectItem value="2m-5m">$2M - $5M MXN</SelectItem>
-                    <SelectItem value="5m-10m">$5M - $10M MXN</SelectItem>
-                    <SelectItem value="10m+">Más de $10M MXN</SelectItem>
-                  </SelectContent>
+  <SelectItem value="all">Todos los precios</SelectItem>
+  <SelectItem value="0-500k">Hasta $500K MXN</SelectItem>
+  <SelectItem value="500k-1m">$500K - $1M MXN</SelectItem>
+  <SelectItem value="1m-2m">$1M - $2M MXN</SelectItem>
+  <SelectItem value="2m-5m">$2M - $5M MXN</SelectItem>
+  <SelectItem value="5m-10m">$5M - $10M MXN</SelectItem>
+  <SelectItem value="10m+">Más de $10M MXN</SelectItem>
+</SelectContent>
                 </Select>
               </div>
             </div>

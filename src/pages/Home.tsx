@@ -45,7 +45,7 @@ useEffect(() => {
             alt="Propiedad premium"
             className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70" />
+          <div className="absolute inset-0 bg-linear-to-b from-background/50 via-transparent to-background/70" />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -280,7 +280,7 @@ useEffect(() => {
                 alt="Equipo LUAL"
                 className="w-full h-64 object-cover opacity-40"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center space-y-4 px-4">
                   <p className="text-2xl font-semibold">

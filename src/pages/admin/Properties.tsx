@@ -16,24 +16,23 @@ export default function AdminProperties() {
   const [editingProperty, setEditingProperty] = useState<any>(null)
 
   const emptyForm = {
-  id: '',
-  name: '',
-  location: '',
-  city: 'Tijuana',
-  type: 'Casa',
-  legal_stage: 'remate',
-  commercial_price: '',
-  auction_price: '',
-  discount: '',
-  bedrooms: '',
-  bathrooms: '',
-  sqm: '',
-  parking: '',
-  description: '',
-  featured: false,
-  active: true,
-  images: [] as string[], 
-}
+    id: '',
+    name: '',
+    location: '',
+    city: 'Tijuana',
+    type: 'Casa',
+    legal_stage: 'remate',
+    commercial_price: '',
+    auction_price: '',
+    discount: '',
+    bedrooms: '',
+    bathrooms: '',
+    parking: '',
+    description: '',
+    featured: false,
+    active: true,
+    images: [] as string[],
+  }
 
   const [form, setForm] = useState(emptyForm)
   const [isSaving, setIsSaving] = useState(false)
@@ -66,13 +65,12 @@ export default function AdminProperties() {
       city: property.city,
       type: property.type,
       legal_stage: property.legal_stage,
-      commercial_price: property.commercial_price,
-      auction_price: property.auction_price,
-      discount: property.discount,
-      bedrooms: property.bedrooms || '',
-      bathrooms: property.bathrooms || '',
-      sqm: property.sqm,
-      parking: property.parking || '',
+      commercial_price: String(property.commercial_price),
+      auction_price: String(property.auction_price),
+      discount: String(property.discount),
+      bedrooms: property.bedrooms != null ? String(property.bedrooms) : '',
+      bathrooms: property.bathrooms != null ? String(property.bathrooms) : '',
+      parking: property.parking != null ? String(property.parking) : '',
       description: property.description || '',
       featured: property.featured,
       active: property.active,
@@ -88,34 +86,50 @@ export default function AdminProperties() {
     setShowForm(true)
   }
 
+  // Convierte string a número positivo o null
+  const toPositiveNumber = (val: string): number | null => {
+    const n = parseFloat(val)
+    if (isNaN(n) || n < 0) return null
+    return n
+  }
+
   const handleSave = async () => {
     setFormError('')
 
-    if (!form.name || !form.location || !form.commercial_price || !form.auction_price || !form.sqm) {
-      setFormError('Por favor completa los campos obligatorios')
+    if (!form.name || !form.location || !form.commercial_price || !form.auction_price) {
+      setFormError('Por favor completa los campos obligatorios: nombre, ubicación y precios')
       return
     }
 
-    if (!form.id && !editingProperty) {
-      setFormError('El ID de la propiedad es obligatorio')
+    const commercial = toPositiveNumber(form.commercial_price)
+    const auction = toPositiveNumber(form.auction_price)
+
+    if (!commercial || !auction) {
+      setFormError('Los precios deben ser números positivos')
       return
+    }
+
+    let propertyId = form.id
+    if (!propertyId && !editingProperty) {
+      const prefix = form.city === 'Tijuana' ? 'tj' : 'cdmx'
+      const timestamp = Date.now().toString().slice(-4)
+      propertyId = `${prefix}-${timestamp}`
     }
 
     setIsSaving(true)
 
-    const data = {
+    const data: any = {
       name: form.name,
       location: form.location,
       city: form.city,
       type: form.type,
       legal_stage: form.legal_stage,
-      commercial_price: Number(form.commercial_price),
-      auction_price: Number(form.auction_price),
-      discount: Number(form.discount),
-      bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
-      bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-      sqm: Number(form.sqm),
-      parking: form.parking ? Number(form.parking) : null,
+      commercial_price: commercial,
+      auction_price: auction,
+      discount: toPositiveNumber(form.discount) ?? 0,
+      bedrooms: toPositiveNumber(form.bedrooms),
+      bathrooms: toPositiveNumber(form.bathrooms),
+      parking: toPositiveNumber(form.parking),
       description: form.description,
       featured: form.featured,
       active: form.active,
@@ -133,7 +147,7 @@ export default function AdminProperties() {
     } else {
       const res = await supabase
         .from('properties')
-        .insert({ ...data, id: form.id })
+        .insert({ ...data, id: propertyId })
       error = res.error
     }
 
@@ -173,9 +187,7 @@ export default function AdminProperties() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Propiedades</h1>
-            <p className="text-muted-foreground mt-1">
-              Gestiona el inventario de propiedades
-            </p>
+            <p className="text-muted-foreground mt-1">Gestiona el inventario de propiedades</p>
           </div>
           <Button onClick={handleNew} className="gap-2">
             <Plus className="w-4 h-4" />
@@ -185,29 +197,13 @@ export default function AdminProperties() {
 
         {/* Formulario */}
         {showForm && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6">
                 {editingProperty ? 'Editar propiedad' : 'Nueva propiedad'}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {!editingProperty && (
-                  <div className="md:col-span-2 space-y-1">
-                    <label className="text-sm font-medium">ID único *</label>
-                    <Input
-                      value={form.id}
-                      onChange={(e) => updateForm('id', e.target.value)}
-                      placeholder="ej: tj-006 o cdmx-006"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Usa formato: ciudad-número (tj-006, cdmx-003)
-                    </p>
-                  </div>
-                )}
 
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-sm font-medium">Nombre *</label>
@@ -254,7 +250,7 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Etapa legal *</label>
+                  <label className="text-sm font-medium">Etapa jurídica *</label>
                   <select
                     value={form.legal_stage}
                     onChange={(e) => updateForm('legal_stage', e.target.value)}
@@ -265,13 +261,21 @@ export default function AdminProperties() {
                     <option value="dacion">Dación en Pago</option>
                     <option value="preventa">Preventa</option>
                     <option value="escrituracion">Escrituración</option>
+                    <option value="etapa_inicial">Etapa Inicial</option>
+                    <option value="ejecucion_sentencia">Ejecución de Sentencia</option>
+                    <option value="desahogo_pruebas">Desahogo de Pruebas</option>
+                    <option value="emplazamiento">Emplazamiento</option>
+                    <option value="entrega_inmediata">Entrega Inmediata</option>
+                    <option value="dacion_pagos">Dación en Pagos</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Descuento % *</label>
+                  <label className="text-sm font-medium">Descuento %</label>
                   <Input
                     type="number"
+                    min="0"
+                    max="100"
                     value={form.discount}
                     onChange={(e) => updateForm('discount', e.target.value)}
                     placeholder="30"
@@ -279,9 +283,10 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Precio comercial *</label>
+                  <label className="text-sm font-medium">Precio comercial * (MXN)</label>
                   <Input
                     type="number"
+                    min="0"
                     value={form.commercial_price}
                     onChange={(e) => updateForm('commercial_price', e.target.value)}
                     placeholder="4800000"
@@ -289,9 +294,10 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Precio de remate *</label>
+                  <label className="text-sm font-medium">Precio de remate * (MXN)</label>
                   <Input
                     type="number"
+                    min="0"
                     value={form.auction_price}
                     onChange={(e) => updateForm('auction_price', e.target.value)}
                     placeholder="3360000"
@@ -299,19 +305,10 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">M² *</label>
-                  <Input
-                    type="number"
-                    value={form.sqm}
-                    onChange={(e) => updateForm('sqm', e.target.value)}
-                    placeholder="280"
-                  />
-                </div>
-
-                <div className="space-y-1">
                   <label className="text-sm font-medium">Recámaras</label>
                   <Input
                     type="number"
+                    min="0"
                     value={form.bedrooms}
                     onChange={(e) => updateForm('bedrooms', e.target.value)}
                     placeholder="3"
@@ -319,12 +316,14 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Baños</label>
+                  <label className="text-sm font-medium">Baños (permite 0.5, 1, 1.5, 2...)</label>
                   <Input
                     type="number"
+                    step="0.5"
+                    min="0"
                     value={form.bathrooms}
                     onChange={(e) => updateForm('bathrooms', e.target.value)}
-                    placeholder="2"
+                    placeholder="1.5"
                   />
                 </div>
 
@@ -332,6 +331,7 @@ export default function AdminProperties() {
                   <label className="text-sm font-medium">Cajones de estacionamiento</label>
                   <Input
                     type="number"
+                    min="0"
                     value={form.parking}
                     onChange={(e) => updateForm('parking', e.target.value)}
                     placeholder="2"
@@ -350,15 +350,15 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
-  <label className="text-sm font-medium">Imágenes de la propiedad</label>
-  <ImageUploader
-    propertyId={editingProperty?.id || form.id || 'nueva'}
-    currentImages={form.images}
-    onImagesChange={(images) => updateForm('images', images)}
-  />
-</div>
+                  <label className="text-sm font-medium">Imágenes de la propiedad</label>
+                  <ImageUploader
+                    propertyId={editingProperty?.id || 'nueva'}
+                    currentImages={form.images}
+                    onImagesChange={(images) => updateForm('images', images)}
+                  />
+                </div>
 
-                <div className="flex items-center gap-6">
+                <div className="md:col-span-2 flex items-center gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -368,7 +368,6 @@ export default function AdminProperties() {
                     />
                     <span className="text-sm font-medium">Destacada</span>
                   </label>
-
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -379,10 +378,11 @@ export default function AdminProperties() {
                     <span className="text-sm font-medium">Activa</span>
                   </label>
                 </div>
+
               </div>
 
               {formError && (
-                <div className="mt-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                   {formError}
                 </div>
               )}
@@ -391,10 +391,7 @@ export default function AdminProperties() {
                 <Button onClick={handleSave} disabled={isSaving}>
                   {isSaving ? 'Guardando...' : editingProperty ? 'Guardar cambios' : 'Crear propiedad'}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowForm(false)}
-                >
+                <Button variant="outline" onClick={() => setShowForm(false)}>
                   Cancelar
                 </Button>
               </div>
@@ -413,7 +410,7 @@ export default function AdminProperties() {
           />
         </div>
 
-        {/* Lista de propiedades */}
+        {/* Lista */}
         {isLoading ? (
           <div className="text-center py-16">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -421,27 +418,17 @@ export default function AdminProperties() {
         ) : (
           <div className="space-y-3">
             {filtered.map((property) => (
-              <motion.div
-                key={property.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <motion.div key={property.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <Card className={`p-4 ${!property.active ? 'opacity-60' : ''}`}>
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {property.id}
-                        </span>
+                        <span className="text-xs font-mono text-muted-foreground">{property.id}</span>
                         {property.featured && (
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                            Destacada
-                          </span>
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Destacada</span>
                         )}
                         {!property.active && (
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                            Inactiva
-                          </span>
+                          <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">Inactiva</span>
                         )}
                       </div>
                       <p className="font-semibold truncate">{property.name}</p>
@@ -454,9 +441,7 @@ export default function AdminProperties() {
                       <p className="font-mono text-sm font-semibold text-primary">
                         ${Number(property.auction_price).toLocaleString('es-MX')}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {property.discount}% descuento
-                      </p>
+                      <p className="text-xs text-muted-foreground">{property.discount}% descuento</p>
                     </div>
 
                     <div className="flex items-center gap-2">

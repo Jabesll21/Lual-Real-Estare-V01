@@ -16,33 +16,44 @@ export default function Dashboard() {
   const [recentForms, setRecentForms] = useState<any[]>([])
 
   useEffect(() => {
-    async function loadStats() {
-      const [propertiesRes, diagnosisRes, recentRes] = await Promise.all([
-        supabase.from('properties').select('id, active'),
-        supabase.from('diagnosis_submissions').select('id, status, created_at'),
-        supabase
-          .from('diagnosis_submissions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5),
-      ])
+  async function loadStats() {
+    const [propertiesRes, diagnosisRes, recentDiagnosisRes, recentInterestsRes] = await Promise.all([
+      supabase.from('properties').select('id, active'),
+      supabase.from('diagnosis_submissions').select('id, status, created_at'),
+      supabase
+        .from('diagnosis_submissions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('property_interests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ])
 
-      const properties = propertiesRes.data || []
-      const diagnosis = diagnosisRes.data || []
+    const properties = propertiesRes.data || []
+    const diagnosis = diagnosisRes.data || []
 
-      setStats({
-        totalProperties: properties.length,
-        activeProperties: properties.filter(p => p.active).length,
-        totalDiagnosis: diagnosis.length,
-        newDiagnosis: diagnosis.filter(d => d.status === 'new').length,
-      })
+    setStats({
+      totalProperties: properties.length,
+      activeProperties: properties.filter(p => p.active).length,
+      totalDiagnosis: diagnosis.length,
+      newDiagnosis: diagnosis.filter(d => d.status === 'new').length,
+    })
 
-      setRecentForms(recentRes.data || [])
-      setIsLoading(false)
-    }
+    // Combinar ambos tipos de formularios ordenados por fecha
+    const combined = [
+      ...(recentDiagnosisRes.data || []).map(f => ({ ...f, tipo: 'Diagnóstico' })),
+      ...(recentInterestsRes.data || []).map(f => ({ ...f, tipo: 'Propiedad', name: f.name, whatsapp: f.whatsapp })),
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 8)
 
-    loadStats()
-  }, [])
+    setRecentForms(combined)
+    setIsLoading(false)
+  }
+
+  loadStats()
+}, [])
 
   const statCards = [
     {
@@ -125,28 +136,38 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {recentForms.map((form) => (
-                <div
-                  key={form.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                >
-                  <div>
-                    <p className="font-medium">{form.name}</p>
-                    <p className="text-sm text-muted-foreground">{form.whatsapp}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                      form.status === 'new'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {form.status === 'new' ? 'Nuevo' : 'Revisado'}
-                    </span>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(form.created_at).toLocaleDateString('es-MX')}
-                    </p>
-                  </div>
-                </div>
-              ))}
+  <div
+    key={form.id}
+    className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+  >
+    <div>
+      <div className="flex items-center gap-2 mb-0.5">
+        <p className="font-medium">{form.name}</p>
+        <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+          {form.tipo}
+        </span>
+        {form.property_name && (
+          <span className="text-xs text-muted-foreground">
+            · {form.property_name}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-muted-foreground">{form.whatsapp}</p>
+    </div>
+    <div className="text-right">
+      <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+        form.status === 'new'
+          ? 'bg-primary/10 text-primary'
+          : 'bg-muted text-muted-foreground'
+      }`}>
+        {form.status === 'new' ? 'Nuevo' : 'Revisado'}
+      </span>
+      <p className="text-xs text-muted-foreground mt-1">
+        {new Date(form.created_at).toLocaleDateString('es-MX')}
+      </p>
+    </div>
+  </div>
+))}
             </div>
           )}
         </Card>

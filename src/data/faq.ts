@@ -16,7 +16,7 @@ export const faqCategories: FAQCategory[] = [
     items: [
       {
         question: "¿Qué es un remate bancario?",
-        answer: "Un remate bancario es el proceso legal mediante el cual un banco recupera un inmueble que fue garantía de un crédito impagado. El banco vende la propiedad a través de un proceso judicial para recuperar el capital prestado. Esto genera oportunidades de inversión con descuentos reales del 20% al 40% sobre el valor comercial."
+        answer: "Un remate bancario es el proceso legal mediante el cual un banco recupera un inmueble que fue garantía de un crédito impagado. El banco vende los derechos a través de un proceso judicial para recuperar el capital prestado. Esto genera oportunidades de inversión con descuentos reales del 20% al 40% sobre el valor comercial."
       },
       {
         question: "¿Por qué hay descuentos en los remates?",

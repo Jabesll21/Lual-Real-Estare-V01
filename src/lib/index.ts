@@ -15,28 +15,52 @@ export type LegalStage =
   | 'preventa'
   | 'escrituracion';
 
-export const LEGAL_STAGES: Record<LegalStage, { label: string; color: string }> = {
+export const LEGAL_STAGES: Record<string, { label: string; color: string }> = {
   adjudicacion: {
-    label: 'SENTENCIA',
-    color: 'bg-accent/10 text-accent border-accent/20',
+    label: 'Adjudicación',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
   },
   remate: {
     label: 'Remate',
-    color: 'bg-primary/10 text-primary border-primary/20',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
   },
   dacion: {
     label: 'Dación en Pago',
-    color: 'bg-secondary/10 text-secondary-foreground border-secondary/20',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
   },
   preventa: {
     label: 'Preventa',
-    color: 'bg-muted text-muted-foreground border-border',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
   },
   escrituracion: {
     label: 'Escrituración',
-    color: 'bg-destructive/10 text-destructive border-destructive/20',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
   },
-};
+  etapa_inicial: {
+    label: 'Etapa Inicial',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+  ejecucion_sentencia: {
+    label: 'Ejecución de Sentencia',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+  desahogo_pruebas: {
+    label: 'Desahogo de Pruebas',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+  emplazamiento: {
+    label: 'Emplazamiento',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+  entrega_inmediata: {
+    label: 'Entrega Inmediata',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+  dacion_pagos: {
+    label: 'Dación en Pagos',
+    color: 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600',
+  },
+}
 
 export const INVESTMENT_RANGES = [
   { value: '500k-1m', label: '$500k - $1M MXN' },
