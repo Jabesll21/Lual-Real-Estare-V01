@@ -7,26 +7,19 @@ import {
   ClipboardList, 
   LogOut, 
   Menu, 
-  X
+  X,
+  Users,
+  BookOpen
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
+
 const menuItems = [
-  { 
-    path: '/admin/dashboard', 
-    label: 'Dashboard', 
-    icon: LayoutDashboard 
-  },
-  { 
-    path: '/admin/propiedades', 
-    label: 'Propiedades', 
-    icon: Building2 
-  },
-  { 
-    path: '/admin/formularios', 
-    label: 'Formularios', 
-    icon: ClipboardList 
-  },
+  { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/propiedades', label: 'Propiedades', icon: Building2 },
+  { path: '/admin/formularios', label: 'Formularios', icon: ClipboardList },
+  { path: '/admin/asesores', label: 'Asesores', icon: Users },
+  { path: '/admin/catalogo-asesores', label: 'Catálogo Asesores', icon: BookOpen },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

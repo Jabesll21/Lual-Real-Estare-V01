@@ -19,6 +19,13 @@ import AdminLogin from "@/pages/admin/Login";
 import Dashboard from "@/pages/admin/Dashboard";
 import AdminProperties from "@/pages/admin/Properties";
 import AdminForms from "@/pages/admin/Forms";
+import { AdvisorProvider } from "@/contexts/AdvisorContext";
+import { ProtectedAdvisorRoute } from "@/components/ProtectedAdvisorRoute";
+import AdvisorLogin from "@/pages/advisors/Login";
+import AdvisorCatalog from "@/pages/advisors/Catalog";
+import AdminAdvisors from "@/pages/admin/Advisors";
+import AdminAdvisorCatalog from "@/pages/admin/AdvisorCatalog";
+
 
 const queryClient = new QueryClient();
 
@@ -28,6 +35,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
+        <AdvisorProvider>
         <MotionConfig reducedMotion="user">
           <HashRouter>
             <Routes>
@@ -51,10 +59,25 @@ const App = () => (
 <Route path="/admin/formularios" element={
   <ProtectedRoute><AdminForms /></ProtectedRoute>
 } />
+
+<Route path="/admin/asesores" element={
+  <ProtectedRoute><AdminAdvisors /></ProtectedRoute>
+} />
+<Route path="/admin/catalogo-asesores" element={
+  <ProtectedRoute><AdminAdvisorCatalog /></ProtectedRoute>
+} />
+
+  <Route path="/asesores" element={<AdvisorLogin />} />
+<Route path="/asesores/catalogo" element={
+  <ProtectedAdvisorRoute>
+    <AdvisorCatalog />
+  </ProtectedAdvisorRoute>
+} />
             </Routes>
             <WhatsAppButton />
           </HashRouter>
         </MotionConfig>
+        </AdvisorProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

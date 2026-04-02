@@ -77,9 +77,8 @@ export interface Property {
   city: 'Tijuana' | 'CDMX';
   type: 'Casa' | 'Departamento' | 'Terreno' | 'Local Comercial';
   legalStage: LegalStage;
-  commercialPrice: number;
+  commercialPrice: number
   auctionPrice: number;
-  discount: number;
   specs: {
     bedrooms?: number;
     bathrooms?: number;

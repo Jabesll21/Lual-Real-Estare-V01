@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 interface AuthContextType {
@@ -15,20 +15,50 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 })
 
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setIsAuthenticated(false)
+  }, [])
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      logout()
+    }, INACTIVITY_TIMEOUT)
+  }, [logout])
 
   useEffect(() => {
-    // Verificar si ya hay sesión activa
+    if (!isAuthenticated) return
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
+    events.forEach(e => window.addEventListener(e, resetTimer))
+    resetTimer()
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetTimer))
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [isAuthenticated, resetTimer])
+
+  useEffect(() => {
+    // Verificar sesión inicial
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session)
       setIsLoading(false)
+    }).catch(() => {
+      setIsAuthenticated(false)
+      setIsLoading(false)
     })
 
-    // Escuchar cambios de sesión
+    // Escuchar cambios
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session)
+      setIsLoading(false)
     })
 
     return () => subscription.unsubscribe()
@@ -37,10 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
-  }
-
-  const logout = async () => {
-    await supabase.auth.signOut()
   }
 
   return (

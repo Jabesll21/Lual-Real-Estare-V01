@@ -1,10 +1,19 @@
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading')
 
-  if (isLoading) {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setStatus(session ? 'authenticated' : 'unauthenticated')
+    }).catch(() => {
+      setStatus('unauthenticated')
+    })
+  }, [])
+
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -12,7 +21,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!isAuthenticated) {
+  if (status === 'unauthenticated') {
     return <Navigate to="/admin" replace />
   }
 

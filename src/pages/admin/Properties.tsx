@@ -24,7 +24,6 @@ export default function AdminProperties() {
     legal_stage: 'remate',
     commercial_price: '',
     auction_price: '',
-    discount: '',
     bedrooms: '',
     bathrooms: '',
     parking: '',
@@ -67,7 +66,6 @@ export default function AdminProperties() {
       legal_stage: property.legal_stage,
       commercial_price: String(property.commercial_price),
       auction_price: String(property.auction_price),
-      discount: String(property.discount),
       bedrooms: property.bedrooms != null ? String(property.bedrooms) : '',
       bathrooms: property.bathrooms != null ? String(property.bathrooms) : '',
       parking: property.parking != null ? String(property.parking) : '',
@@ -126,7 +124,6 @@ export default function AdminProperties() {
       legal_stage: form.legal_stage,
       commercial_price: commercial,
       auction_price: auction,
-      discount: toPositiveNumber(form.discount) ?? 0,
       bedrooms: toPositiveNumber(form.bedrooms),
       bathrooms: toPositiveNumber(form.bathrooms),
       parking: toPositiveNumber(form.parking),
@@ -197,7 +194,11 @@ export default function AdminProperties() {
 
         {/* Formulario */}
         {showForm && (
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+  <motion.div
+    key={editingProperty?.id || 'new'}
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    >
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6">
                 {editingProperty ? 'Editar propiedad' : 'Nueva propiedad'}
@@ -271,16 +272,15 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Descuento %</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={form.discount}
-                    onChange={(e) => updateForm('discount', e.target.value)}
-                    placeholder="30"
-                  />
-                </div>
+  <label className="text-sm font-medium">Precio comercial * (MXN)</label>
+  <Input
+    type="number"
+    min="0"
+    value={form.commercial_price}
+    onChange={(e) => updateForm('commercial_price', e.target.value)}
+    placeholder="4800000"
+  />
+</div>
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Precio comercial * (MXN)</label>
