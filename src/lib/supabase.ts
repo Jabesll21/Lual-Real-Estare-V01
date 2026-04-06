@@ -7,4 +7,18 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Faltan las credenciales de Supabase en el archivo .env')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Lock personalizado que nunca aborta
+const noLock = async (name: string, acquireTimeout: number, fn: () => Promise<any>) => {
+  return await fn()
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: localStorage,
+    storageKey: 'sb-jsadaigsymrbovdhiybq-auth-token',
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+    lock: noLock,
+  },
+})

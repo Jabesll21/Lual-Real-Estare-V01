@@ -18,21 +18,24 @@ export default function AdminLogin() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   if (!email || !password) {
     setError('Por favor completa todos los campos')
     return
   }
-
   setIsLoading(true)
   setError('')
-
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    // Redirigir directamente sin depender del contexto
-    window.location.href = '/#/admin/dashboard'
-  } catch (err) {
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    })
+    if (authError) throw authError
+    if (data.session) {
+      window.location.hash = '/admin/dashboard'
+      window.location.reload()
+    }
+  } catch (err: any) {
     setError('Credenciales incorrectas. Verifica tu email y contraseña.')
     setIsLoading(false)
   }

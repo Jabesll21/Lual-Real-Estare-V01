@@ -31,7 +31,11 @@ export default function Home() {
   const [featuredProperties, setFeaturedProperties] = useState<any[]>([])
 
 useEffect(() => {
-  getFeaturedProperties().then(setFeaturedProperties)
+  let mounted = true
+  getFeaturedProperties().then(data => {
+    if (mounted) setFeaturedProperties(data)
+  })
+  return () => { mounted = false }
 }, [])
   const quickFAQ = faqCategories[0].items.slice(0, 5);
   const featuredTestimonials = testimonials.slice(0, 3);

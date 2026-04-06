@@ -33,11 +33,15 @@ export default function Opportunities() {
   const [legalFilter, setLegalFilter] = useState<LegalStageFilter>('all')
 
   useEffect(() => {
-    getProperties().then((data) => {
+  let mounted = true
+  getProperties().then((data) => {
+    if (mounted) {
       setProperties(data)
       setLoadingProperties(false)
-    })
-  }, [])
+    }
+  })
+  return () => { mounted = false }
+}, [])
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) => {

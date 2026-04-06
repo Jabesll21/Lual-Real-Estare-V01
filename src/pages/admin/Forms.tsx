@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type FormType = 'diagnosis' | 'property_interest'
 
@@ -16,6 +17,7 @@ export default function AdminForms() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | FormType>('all')
+  const [cityTab, setCityTab] = useState<'all' | 'Tijuana' | 'CDMX'>('all')
 
   useEffect(() => {
     loadForms()
@@ -77,7 +79,19 @@ export default function AdminForms() {
       (statusFilter === 'reviewed' && f.status === 'reviewed')
     const matchesType =
       typeFilter === 'all' || f.formType === typeFilter
-    return matchesSearch && matchesStatus && matchesType
+    // Filtro por ciudad
+    const matchesCity = cityTab === 'all' || (() => {
+      if (f.formType === 'diagnosis') {
+        if (cityTab === 'Tijuana') return f.city_interest === 'tijuana' || f.city_interest === 'both'
+        if (cityTab === 'CDMX') return f.city_interest === 'cdmx' || f.city_interest === 'both'
+      }
+      if (f.formType === 'property_interest') {
+        return f.properties?.city === cityTab
+      }
+      return true
+    })()
+
+    return matchesSearch && matchesStatus && matchesType && matchesCity
   })
 
   const capitalLabels: Record<string, string> = {
@@ -108,15 +122,22 @@ export default function AdminForms() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Formularios</h1>
-            <p className="text-muted-foreground mt-1">
-              Diagnósticos e interés en propiedades recibidos
-            </p>
+            <p className="text-muted-foreground mt-1">Diagnósticos e interés en propiedades recibidos</p>
           </div>
-          {newCount > 0 && (
-            <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1.5 rounded-full">
-              {newCount} sin revisar
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {newCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1.5 rounded-full">
+                {newCount} sin revisar
+              </span>
+            )}
+            <Tabs value={cityTab} onValueChange={(v) => setCityTab(v as 'all' | 'Tijuana' | 'CDMX')}>
+              <TabsList>
+                <TabsTrigger value="all">Todas</TabsTrigger>
+                <TabsTrigger value="Tijuana">Tijuana</TabsTrigger>
+                <TabsTrigger value="CDMX">CDMX</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
 
         {/* Filtros */}

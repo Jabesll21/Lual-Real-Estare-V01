@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
 import { ImageUploader } from '@/components/ImageUploader'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function AdminProperties() {
   const [properties, setProperties] = useState<any[]>([])
@@ -14,6 +15,7 @@ export default function AdminProperties() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingProperty, setEditingProperty] = useState<any>(null)
+  const [cityTab, setCityTab] = useState<'all' | 'Tijuana' | 'CDMX'>('all')
 
   const emptyForm = {
     id: '',
@@ -37,19 +39,18 @@ export default function AdminProperties() {
   const [isSaving, setIsSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
-  useEffect(() => {
-    loadProperties()
-  }, [])
+ useEffect(() => {
+  loadProperties()
+}, [cityTab])
 
   async function loadProperties() {
-    setIsLoading(true)
-    const { data } = await supabase
-      .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setProperties(data || [])
-    setIsLoading(false)
-  }
+  setIsLoading(true)
+  let query = supabase.from('properties').select('*').order('created_at', { ascending: false })
+  if (cityTab !== 'all') query = query.eq('city', cityTab)
+  const { data } = await query
+  setProperties(data || [])
+  setIsLoading(false)
+}
 
   const updateForm = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -186,10 +187,19 @@ export default function AdminProperties() {
             <h1 className="text-3xl font-bold">Propiedades</h1>
             <p className="text-muted-foreground mt-1">Gestiona el inventario de propiedades</p>
           </div>
-          <Button onClick={handleNew} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Nueva propiedad
-          </Button>
+          <div className="flex items-center gap-4">
+            <Tabs value={cityTab} onValueChange={(v) => setCityTab(v as 'all' | 'Tijuana' | 'CDMX')}>
+              <TabsList>
+                <TabsTrigger value="all">Todas</TabsTrigger>
+                <TabsTrigger value="Tijuana">Tijuana</TabsTrigger>
+                <TabsTrigger value="CDMX">CDMX</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button onClick={handleNew} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Nueva propiedad
+            </Button>
+          </div>
         </div>
 
         {/* Formulario */}

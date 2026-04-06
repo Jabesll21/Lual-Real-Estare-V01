@@ -1,8 +1,23 @@
-import { supabase } from '@/lib/supabase'
-import { Property } from '@/lib/index'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Convertir formato de Supabase al formato que usa la página
-function mapProperty(row: any): Property {
+async function querySupabase(table: string, params: string) {
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${table}?${params}`,
+    {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      keepalive: true,
+    }
+  )
+  if (!response.ok) throw new Error(`Error ${response.status}`)
+  return response.json()
+}
+
+function mapProperty(row: any) {
   return {
     id: row.id,
     name: row.name,
@@ -27,52 +42,32 @@ function mapProperty(row: any): Property {
   }
 }
 
-// Obtener todas las propiedades activas
-export async function getProperties(): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('active', true)
-    .order('created_at', { ascending: false })
-
-  if (error) {
+export async function getProperties() {
+  try {
+    const data = await querySupabase('properties', 'active=eq.true&order=created_at.desc')
+    return data.map(mapProperty)
+  } catch (error) {
     console.error('Error cargando propiedades:', error)
     return []
   }
-
-  return data.map(mapProperty)
 }
 
-// Obtener solo propiedades destacadas
-export async function getFeaturedProperties(): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('active', true)
-    .eq('featured', true)
-    .order('created_at', { ascending: false })
-
-  if (error) {
+export async function getFeaturedProperties() {
+  try {
+    const data = await querySupabase('properties', 'active=eq.true&featured=eq.true&order=created_at.desc')
+    return data.map(mapProperty)
+  } catch (error) {
     console.error('Error cargando propiedades destacadas:', error)
     return []
   }
-
-  return data.map(mapProperty)
 }
 
-// Obtener propiedades por ciudad
-export async function getPropertiesByCity(city: 'Tijuana' | 'CDMX'): Promise<Property[]> {
-  const { data, error } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('active', true)
-    .eq('city', city)
-    .order('created_at', { ascending: false })
-
-  if (error) {
+export async function getPropertiesByCity(city: 'Tijuana' | 'CDMX') {
+  try {
+    const data = await querySupabase('properties', `active=eq.true&city=eq.${city}&order=created_at.desc`)
+    return data.map(mapProperty)
+  } catch (error) {
     console.error('Error cargando propiedades por ciudad:', error)
     return []
   }
-
-  return data.map(mapProperty)
 }

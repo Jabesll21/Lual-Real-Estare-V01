@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useAdvisor } from '@/contexts/AdvisorContext'
 import { LEGAL_STAGES, formatPrice } from '@/lib/index'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function AdvisorCatalog() {
   const [properties, setProperties] = useState<any[]>([])
@@ -18,6 +19,7 @@ export default function AdvisorCatalog() {
   const [selected, setSelected] = useState<any>(null)
   const { advisorProfile } = useAdvisor()
   const navigate = useNavigate()
+  const [cityTab, setCityTab] = useState<'all' | 'Tijuana' | 'CDMX'>('all')
 
   useEffect(() => {
     loadCatalog()
@@ -27,6 +29,7 @@ export default function AdvisorCatalog() {
   await supabase.auth.signOut()
   navigate('/asesores')
 }
+
 
   async function loadCatalog() {
   setIsLoading(true)
@@ -74,12 +77,23 @@ export default function AdvisorCatalog() {
       const prop = p.properties
       if (!prop) return false
       const q = searchQuery.toLowerCase()
-      return (
+      const matchesSearch =
         prop.name?.toLowerCase().includes(q) ||
         prop.location?.toLowerCase().includes(q)
-      )
+      const matchesCity = cityTab === 'all' || prop.city === cityTab
+      return matchesSearch && matchesCity
     })
-  }, [properties, searchQuery])
+  }, [properties, searchQuery, cityTab])
+
+  const filteredDictamen = useMemo(() =>
+    cityTab === 'all' ? dictamenPositivo : dictamenPositivo.filter(i => i.properties?.city === cityTab),
+    [dictamenPositivo, cityTab]
+  )
+
+  const filteredEntrega = useMemo(() =>
+    cityTab === 'all' ? entregaInmediata : entregaInmediata.filter(i => i.properties?.city === cityTab),
+    [entregaInmediata, cityTab]
+  )
 
   const PropertyCard = ({ item, showExtras = true }: { item: any, showExtras?: boolean }) => {
     const prop = item.properties
@@ -202,7 +216,7 @@ export default function AdvisorCatalog() {
         ) : (
           <>
             {/* SECCIÓN: Dictamen Positivo */}
-            {dictamenPositivo.length > 0 && (
+            {filteredDictamen.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 rounded-lg bg-green-500/10">
@@ -215,11 +229,11 @@ export default function AdvisorCatalog() {
                     </p>
                   </div>
                   <span className="ml-auto text-xs bg-green-500/10 text-green-600 px-2 py-1 rounded-full font-medium">
-                    {dictamenPositivo.length} propiedades
+                    {filteredDictamen.length} propiedades
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {dictamenPositivo.map(item => (
+                  {filteredDictamen.map(item => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -234,7 +248,7 @@ export default function AdvisorCatalog() {
             )}
 
             {/* SECCIÓN: Entrega Inmediata */}
-            {entregaInmediata.length > 0 && (
+            {filteredEntrega.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 rounded-lg bg-orange-500/10">
@@ -247,11 +261,11 @@ export default function AdvisorCatalog() {
                     </p>
                   </div>
                   <span className="ml-auto text-xs bg-orange-500/10 text-orange-500 px-2 py-1 rounded-full font-medium">
-                    {entregaInmediata.length} propiedades
+                    {filteredEntrega.length} propiedades
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {entregaInmediata.map(item => (
+                  {filteredEntrega.map(item => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0, y: 10 }}

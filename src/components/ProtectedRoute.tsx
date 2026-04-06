@@ -1,27 +1,39 @@
-import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { supabase } from '@/lib/supabase'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading')
+  const hasSession = () => {
+    try {
+      // Verificar todas las keys posibles donde Supabase guarda la sesión
+      const keysToCheck = [
+        'lual-auth',
+        'sb-jsadaigsymrbovdhiybq-auth-token',
+      ]
+      
+      for (const key of keysToCheck) {
+        const item = localStorage.getItem(key)
+        if (item) {
+          const parsed = JSON.parse(item)
+          if (parsed?.access_token) return true
+        }
+      }
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setStatus(session ? 'authenticated' : 'unauthenticated')
-    }).catch(() => {
-      setStatus('unauthenticated')
-    })
-  }, [])
+      // También buscar cualquier key que tenga access_token
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (!key) continue
+        try {
+          const item = localStorage.getItem(key)
+          if (item?.includes('access_token')) return true
+        } catch { continue }
+      }
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+      return false
+    } catch {
+      return false
+    }
   }
 
-  if (status === 'unauthenticated') {
+  if (!hasSession()) {
     return <Navigate to="/admin" replace />
   }
 
