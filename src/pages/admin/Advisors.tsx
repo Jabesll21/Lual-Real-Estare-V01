@@ -17,28 +17,67 @@ export default function AdminAdvisors() {
   }, [])
 
   async function loadAdvisors() {
-    setIsLoading(true)
-    const { data } = await supabase
-      .from('advisor_profiles')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setAdvisors(data || [])
-    setIsLoading(false)
-  }
+  setIsLoading(true)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
 
-  const handleToggleActive = async (advisor: any) => {
-    await supabase
-      .from('advisor_profiles')
-      .update({ active: !advisor.active })
-      .eq('id', advisor.id)
-    loadAdvisors()
-  }
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/advisor_profiles?select=*&order=created_at.desc`,
+    {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token}`,
+      },
+    }
+  )
+  const data = await response.json()
+  setAdvisors(Array.isArray(data) ? data : [])
+  setIsLoading(false)
+}
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Eliminar este asesor? Perderá acceso al portal inmediatamente.')) return
-    await supabase.from('advisor_profiles').delete().eq('id', id)
-    loadAdvisors()
-  }
+ const handleToggleActive = async (advisor: any) => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+  await fetch(`${supabaseUrl}/rest/v1/advisor_profiles?id=eq.${advisor.id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ active: !advisor.active }),
+  })
+
+  setAdvisors(prev =>
+    prev.map(a => a.id === advisor.id ? { ...a, active: !a.active } : a)
+  )
+}
+
+const handleDelete = async (id: string) => {
+  if (!confirm('¿Eliminar este asesor? Perderá acceso al portal inmediatamente.')) return
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+  await fetch(`${supabaseUrl}/rest/v1/advisor_profiles?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+      'Prefer': 'return=minimal',
+    },
+  })
+
+  setAdvisors(prev => prev.filter(a => a.id !== id))
+}
 
   const filtered = advisors.filter(a =>
     a.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||

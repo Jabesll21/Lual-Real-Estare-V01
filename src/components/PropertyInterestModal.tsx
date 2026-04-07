@@ -227,7 +227,6 @@ export function PropertyInterestModal({ property, onClose }: PropertyInterestMod
                     >
                       {[
                         { value: 'yes', label: 'Sí, cuento con capital' },
-                        { value: 'not-sure', label: 'No estoy seguro' },
                         { value: 'no', label: 'No, necesito financiamiento' },
                       ].map((opt) => (
                         <div

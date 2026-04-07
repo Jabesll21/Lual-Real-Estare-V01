@@ -30,30 +30,50 @@ export default function AdvisorCatalog() {
   navigate('/asesores')
 }
 
-
-  async function loadCatalog() {
+async function loadCatalog() {
   setIsLoading(true)
 
   const [catalogRes, dictamenRes, entregaRes] = await Promise.all([
     supabase
       .from('advisor_properties')
-      .select('*, properties (*)')
+      .select(`
+        id,
+        property_id,
+        rpp_document_url,
+        map_lat,
+        map_lng,
+        map_location,
+        extra_notes,
+        active,
+        properties(id, name, location, city, auction_price, legal_stage, images)
+      `)
       .eq('active', true),
     supabase
       .from('advisor_featured_sections')
-      .select('*, properties (*)')
+      .select(`
+        id,
+        property_id,
+        section_type,
+        active,
+        properties(id, name, location, city, auction_price, legal_stage, images)
+      `)
       .eq('section_type', 'dictamen_positivo')
       .eq('active', true),
     supabase
       .from('advisor_featured_sections')
-      .select('*, properties (*)')
+      .select(`
+        id,
+        property_id,
+        section_type,
+        active,
+        properties(id, name, location, city, auction_price, legal_stage, images)
+      `)
       .eq('section_type', 'entrega_inmediata')
       .eq('active', true),
   ])
 
   const catalogData = catalogRes.data || []
 
-  // Enriquecer secciones con datos extra de advisor_properties
   const enrichWithExtras = (items: any[]) =>
     items.map(item => {
       const extra = catalogData.find(c => c.property_id === item.property_id)

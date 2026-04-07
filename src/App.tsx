@@ -25,7 +25,7 @@ import AdvisorLogin from "@/pages/advisors/Login";
 import AdvisorCatalog from "@/pages/advisors/Catalog";
 import AdminAdvisors from "@/pages/admin/Advisors";
 import AdminAdvisorCatalog from "@/pages/admin/AdvisorCatalog";
-
+import AdminPautas from "@/pages/admin/Pautas";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +72,9 @@ const App = () => (
   <ProtectedAdvisorRoute>
     <AdvisorCatalog />
   </ProtectedAdvisorRoute>
+} />
+<Route path="/admin/pautas" element={
+  <ProtectedRoute><AdminPautas /></ProtectedRoute>
 } />
             </Routes>
             <WhatsAppButton />

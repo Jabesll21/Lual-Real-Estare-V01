@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
 import { LEGAL_STAGES, formatPrice } from '@/lib/index'
+import { useRef } from 'react'
+
 
 export default function AdminAdvisorCatalog() {
   const [catalogItems, setCatalogItems] = useState<any[]>([])
@@ -18,6 +20,9 @@ export default function AdminAdvisorCatalog() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingPdf, setIsUploadingPdf] = useState(false)
   const [formError, setFormError] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const formRef = useRef<HTMLDivElement>(null)
+const PAGE_SIZE = 30
   const [searchQuery, setSearchQuery] = useState('')
   const [form, setForm] = useState({
     property_id: '',
@@ -27,27 +32,54 @@ export default function AdminAdvisorCatalog() {
     map_location: '',
     extra_notes: '',
   })
+
   const handleAddToSection = async (sectionType: 'dictamen_positivo' | 'entrega_inmediata') => {
   if (!sectionPropertyId) return
-  await supabase.from('advisor_featured_sections').insert({
-    section_type: sectionType,
-    property_id: sectionPropertyId,
-    active: true,
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+  await fetch(`${supabaseUrl}/rest/v1/advisor_featured_sections`, {
+    method: 'POST',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ section_type: sectionType, property_id: sectionPropertyId, active: true }),
   })
+
   setSectionPropertyId('')
   setShowSectionForm(null)
   loadSections()
 }
 
 const handleRemoveFromSection = async (id: string) => {
-  await supabase.from('advisor_featured_sections').delete().eq('id', id)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+  await fetch(`${supabaseUrl}/rest/v1/advisor_featured_sections?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+      'Prefer': 'return=minimal',
+    },
+  })
+
   loadSections()
 }
 
  useEffect(() => {
   loadData()
   loadSections()
-}, [])
+}, [currentPage])
+
   const [featuredSections, setFeaturedSections] = useState<{
   dictamen_positivo: any[],
   entrega_inmediata: any[]
@@ -55,75 +87,115 @@ const handleRemoveFromSection = async (id: string) => {
 const [showSectionForm, setShowSectionForm] = useState<'dictamen_positivo' | 'entrega_inmediata' | null>(null)
 const [sectionPropertyId, setSectionPropertyId] = useState('')
 
-  async function loadData() {
-    setIsLoading(true)
+ async function loadData() {
+  setIsLoading(true)
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
+    const headers = { 'apikey': supabaseKey, 'Authorization': `Bearer ${token}` }
+
     const [catalogRes, propertiesRes] = await Promise.all([
-      supabase
-        .from('advisor_properties')
-        .select('*, properties(*)')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('properties')
-        .select('id, name, location, city')
-        .eq('active', true)
-        .order('name'),
+      fetch(`${supabaseUrl}/rest/v1/advisor_properties?select=id,property_id,rpp_document_url,map_lat,map_lng,map_location,extra_notes,active,properties(id,name,location,city,auction_price,legal_stage,images)&active=eq.true&order=created_at.desc`, { headers }),
+      fetch(`${supabaseUrl}/rest/v1/properties?select=id,name,location,city&active=eq.true&order=name.asc`, { headers }),
     ])
-    setCatalogItems(catalogRes.data || [])
-    setAllProperties(propertiesRes.data || [])
+
+    const [catalog, properties] = await Promise.all([
+      catalogRes.json(),
+      propertiesRes.json(),
+    ])
+
+    setCatalogItems(Array.isArray(catalog) ? catalog : [])
+    setAllProperties(Array.isArray(properties) ? properties : [])
+  } catch (error) {
+    console.error('Error cargando datos:', error)
+  } finally {
     setIsLoading(false)
   }
+}
 
-  async function loadSections() {
-  const { data } = await supabase
-    .from('advisor_featured_sections')
-    .select('*, properties(id, name, location)')
-    .eq('active', true)
+async function loadSections() {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
+    const headers = { 'apikey': supabaseKey, 'Authorization': `Bearer ${token}` }
 
-  const dictamen = data?.filter(d => d.section_type === 'dictamen_positivo') || []
-  const entrega = data?.filter(d => d.section_type === 'entrega_inmediata') || []
-  setFeaturedSections({ dictamen_positivo: dictamen, entrega_inmediata: entrega })
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/advisor_featured_sections?select=*,properties(id,name,location)&active=eq.true`,
+      { headers }
+    )
+    const data = await res.json()
+    const items = Array.isArray(data) ? data : []
+
+    setFeaturedSections({
+      dictamen_positivo: items.filter((d: any) => d.section_type === 'dictamen_positivo'),
+      entrega_inmediata: items.filter((d: any) => d.section_type === 'entrega_inmediata'),
+    })
+  } catch (error) {
+    console.error('Error cargando secciones:', error)
+  }
 }
 
   const updateForm = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+ const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
 
-    if (file.type !== 'application/pdf') {
-      setFormError('Solo se permiten archivos PDF')
-      return
-    }
+  if (file.type !== 'application/pdf') {
+    setFormError('Solo se permiten archivos PDF')
+    return
+  }
 
-    if (file.size > 20 * 1024 * 1024) {
-      setFormError('El PDF no puede pesar más de 20MB')
-      return
-    }
+  if (file.size > 20 * 1024 * 1024) {
+    setFormError('El PDF no puede pesar más de 20MB')
+    return
+  }
 
-    setIsUploadingPdf(true)
-    setFormError('')
+  setIsUploadingPdf(true)
+  setFormError('')
+
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
 
     const fileName = `rpp/${Date.now()}-${file.name.replace(/\s/g, '_')}`
-    const { error } = await supabase.storage
-      .from('property-documents')
-      .upload(fileName, file)
 
-    if (error) {
-      setFormError('Error al subir PDF: ' + error.message)
-      setIsUploadingPdf(false)
-      return
+    const response = await fetch(
+      `${supabaseUrl}/storage/v1/object/property-documents/${fileName}`,
+      {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': file.type,
+          'x-upsert': 'true',
+        },
+        body: file,
+      }
+    )
+
+    if (!response.ok) {
+      const error = await response.text()
+      throw new Error(error)
     }
 
-    const { data } = supabase.storage
-      .from('property-documents')
-      .getPublicUrl(fileName)
-
-    updateForm('rpp_document_url', data.publicUrl)
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/property-documents/${fileName}`
+    updateForm('rpp_document_url', publicUrl)
+  } catch (error: any) {
+    setFormError('Error al subir PDF: ' + (error?.message || 'Error desconocido'))
+  } finally {
     setIsUploadingPdf(false)
     e.target.value = ''
   }
+}
 
   const handleEdit = (item: any) => {
     setEditingItem(item)
@@ -137,6 +209,9 @@ const [sectionPropertyId, setSectionPropertyId] = useState('')
     })
     setShowForm(true)
     setFormError('')
+    setTimeout(() => {
+  formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}, 100)
   }
 
   const handleNew = () => {
@@ -153,51 +228,65 @@ const [sectionPropertyId, setSectionPropertyId] = useState('')
     setShowForm(true)
   }
 
-  const handleSave = async () => {
-    setFormError('')
-    if (!form.property_id) {
-      setFormError('Selecciona una propiedad')
-      return
-    }
+ const handleSave = async () => {
+  setFormError('')
+  setIsSaving(true)
 
-    setIsSaving(true)
-
-    const data = {
-      property_id: form.property_id,
+  try {
+    const dataToSave: any = {
+      active: true,
       rpp_document_url: form.rpp_document_url || null,
       map_lat: form.map_lat ? Number(form.map_lat) : null,
       map_lng: form.map_lng ? Number(form.map_lng) : null,
       map_location: form.map_location || null,
       extra_notes: form.extra_notes || null,
-      active: true,
     }
 
-    let error
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+    // Obtener token de sesión del localStorage directamente
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+    let url: string
+    let method: string
 
     if (editingItem) {
-      const res = await supabase
-        .from('advisor_properties')
-        .update(data)
-        .eq('id', editingItem.id)
-      error = res.error
+      url = `${supabaseUrl}/rest/v1/advisor_properties?id=eq.${editingItem.id}`
+      method = 'PATCH'
     } else {
-      const res = await supabase
-        .from('advisor_properties')
-        .insert(data)
-      error = res.error
+      dataToSave.property_id = form.property_id
+      url = `${supabaseUrl}/rest/v1/advisor_properties`
+      method = 'POST'
     }
 
-    setIsSaving(false)
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(dataToSave),
+    })
 
-    if (error) {
-      setFormError('Error al guardar: ' + error.message)
-      return
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Error ${response.status}: ${errorText}`)
     }
 
     setShowForm(false)
     setEditingItem(null)
-    loadData()
+    await loadData()
+  } catch (error: any) {
+    console.error('Error al guardar:', error)
+    setFormError('Error: ' + (error?.message || 'Error desconocido'))
+  } finally {
+    setIsSaving(false)
   }
+}
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Quitar esta propiedad del catálogo de asesores?')) return
@@ -239,11 +328,12 @@ const [sectionPropertyId, setSectionPropertyId] = useState('')
 
         {/* Formulario */}
         {showForm && (
-          <motion.div
-            key={editingItem?.id || 'new'}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+  <motion.div
+    ref={formRef}
+    key={editingItem?.id || 'new'}
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+  >
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6">
                 {editingItem ? 'Editar información extra' : 'Agregar al catálogo'}

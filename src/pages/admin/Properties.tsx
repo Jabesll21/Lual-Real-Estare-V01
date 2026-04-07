@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Pencil, Trash2, Search, ToggleLeft, ToggleRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
 import { ImageUploader } from '@/components/ImageUploader'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useRef } from 'react'
 
 export default function AdminProperties() {
   const [properties, setProperties] = useState<any[]>([])
@@ -16,6 +17,7 @@ export default function AdminProperties() {
   const [showForm, setShowForm] = useState(false)
   const [editingProperty, setEditingProperty] = useState<any>(null)
   const [cityTab, setCityTab] = useState<'all' | 'Tijuana' | 'CDMX'>('all')
+  const formRef = useRef<HTMLDivElement>(null)
 
   const emptyForm = {
     id: '',
@@ -39,43 +41,66 @@ export default function AdminProperties() {
   const [isSaving, setIsSaving] = useState(false)
   const [formError, setFormError] = useState('')
 
- useEffect(() => {
-  loadProperties()
-}, [cityTab])
+  useEffect(() => {
+    loadProperties()
+  }, [])
 
   async function loadProperties() {
-  setIsLoading(true)
-  let query = supabase.from('properties').select('*').order('created_at', { ascending: false })
-  if (cityTab !== 'all') query = query.eq('city', cityTab)
-  const { data } = await query
-  setProperties(data || [])
-  setIsLoading(false)
-}
+    setIsLoading(true)
+    const { data } = await supabase
+      .from('properties')
+      .select('id, name, location, city, type, legal_stage, auction_price, active, featured')
+      .order('created_at', { ascending: false })
+    setProperties(data || [])
+    setIsLoading(false)
+  }
+
+  const filtered = useMemo(() => {
+    return properties.filter(p => {
+      const matchesCity = cityTab === 'all' || p.city === cityTab
+      const matchesSearch = !searchQuery ||
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.location?.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesCity && matchesSearch
+    })
+  }, [properties, cityTab, searchQuery])
 
   const updateForm = (field: string, value: any) => {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleEdit = (property: any) => {
-    setEditingProperty(property)
+  const handleEdit = async (property: any) => {
+    // Cargar datos completos de la propiedad al editar
+    const { data } = await supabase
+      .from('properties')
+      .select('*')
+      .eq('id', property.id)
+      .single()
+
+    if (!data) return
+
+    setEditingProperty(data)
     setForm({
-      id: property.id,
-      name: property.name,
-      location: property.location,
-      city: property.city,
-      type: property.type,
-      legal_stage: property.legal_stage,
-      commercial_price: String(property.commercial_price),
-      auction_price: String(property.auction_price),
-      bedrooms: property.bedrooms != null ? String(property.bedrooms) : '',
-      bathrooms: property.bathrooms != null ? String(property.bathrooms) : '',
-      parking: property.parking != null ? String(property.parking) : '',
-      description: property.description || '',
-      featured: property.featured,
-      active: property.active,
-      images: property.images || [],
+      id: data.id,
+      name: data.name,
+      location: data.location,
+      city: data.city,
+      type: data.type,
+      legal_stage: data.legal_stage,
+      commercial_price: String(data.commercial_price),
+      auction_price: String(data.auction_price),
+      bedrooms: data.bedrooms != null ? String(data.bedrooms) : '',
+      bathrooms: data.bathrooms != null ? String(data.bathrooms) : '',
+      parking: data.parking != null ? String(data.parking) : '',
+      description: data.description || '',
+      featured: data.featured,
+      active: data.active,
+      images: data.images || [],
     })
     setShowForm(true)
+    setTimeout(() => {
+  formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}, 100)
   }
 
   const handleNew = () => {
@@ -85,7 +110,6 @@ export default function AdminProperties() {
     setShowForm(true)
   }
 
-  // Convierte string a número positivo o null
   const toPositiveNumber = (val: string): number | null => {
     const n = parseFloat(val)
     if (isNaN(n) || n < 0) return null
@@ -117,67 +141,109 @@ export default function AdminProperties() {
 
     setIsSaving(true)
 
-    const data: any = {
-      name: form.name,
-      location: form.location,
-      city: form.city,
-      type: form.type,
-      legal_stage: form.legal_stage,
-      commercial_price: commercial,
-      auction_price: auction,
-      bedrooms: toPositiveNumber(form.bedrooms),
-      bathrooms: toPositiveNumber(form.bathrooms),
-      parking: toPositiveNumber(form.parking),
-      description: form.description,
-      featured: form.featured,
-      active: form.active,
-      images: form.images,
+    try {
+      const dataToSave: any = {
+        name: form.name,
+        location: form.location,
+        city: form.city,
+        type: form.type,
+        legal_stage: form.legal_stage,
+        commercial_price: commercial,
+        auction_price: auction,
+        bedrooms: toPositiveNumber(form.bedrooms),
+        bathrooms: toPositiveNumber(form.bathrooms),
+        parking: toPositiveNumber(form.parking),
+        description: form.description,
+        featured: form.featured,
+        active: form.active,
+        images: form.images,
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+      const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+      let url: string
+      let method: string
+
+      if (editingProperty) {
+        url = `${supabaseUrl}/rest/v1/properties?id=eq.${editingProperty.id}`
+        method = 'PATCH'
+      } else {
+        dataToSave.id = propertyId
+        url = `${supabaseUrl}/rest/v1/properties`
+        method = 'POST'
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(dataToSave),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Error ${response.status}: ${errorText}`)
+      }
+
+      setShowForm(false)
+      setEditingProperty(null)
+      loadProperties()
+    } catch (error: any) {
+      setFormError('Error al guardar: ' + (error?.message || 'Error desconocido'))
+    } finally {
+      setIsSaving(false)
     }
-
-    let error
-
-    if (editingProperty) {
-      const res = await supabase
-        .from('properties')
-        .update(data)
-        .eq('id', editingProperty.id)
-      error = res.error
-    } else {
-      const res = await supabase
-        .from('properties')
-        .insert({ ...data, id: propertyId })
-      error = res.error
-    }
-
-    setIsSaving(false)
-
-    if (error) {
-      setFormError('Error al guardar: ' + error.message)
-      return
-    }
-
-    setShowForm(false)
-    loadProperties()
   }
 
   const handleToggleActive = async (property: any) => {
-    await supabase
-      .from('properties')
-      .update({ active: !property.active })
-      .eq('id', property.id)
-    loadProperties()
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+    await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${property.id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ active: !property.active }),
+    })
+
+    // Actualizar localmente sin recargar
+    setProperties(prev =>
+      prev.map(p => p.id === property.id ? { ...p, active: !p.active } : p)
+    )
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar esta propiedad? Esta acción no se puede deshacer.')) return
-    await supabase.from('properties').delete().eq('id', id)
-    loadProperties()
-  }
 
-  const filtered = properties.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.location.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
+
+    await fetch(`${supabaseUrl}/rest/v1/properties?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${token}`,
+        'Prefer': 'return=minimal',
+      },
+    })
+
+    setProperties(prev => prev.filter(p => p.id !== id))
+  }
 
   return (
     <AdminLayout>
@@ -185,7 +251,9 @@ export default function AdminProperties() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Propiedades</h1>
-            <p className="text-muted-foreground mt-1">Gestiona el inventario de propiedades</p>
+            <p className="text-muted-foreground mt-1">
+              {filtered.length} propiedades
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <Tabs value={cityTab} onValueChange={(v) => setCityTab(v as 'all' | 'Tijuana' | 'CDMX')}>
@@ -205,42 +273,31 @@ export default function AdminProperties() {
         {/* Formulario */}
         {showForm && (
   <motion.div
+    ref={formRef}
     key={editingProperty?.id || 'new'}
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: 1, y: 0 }}
-    >
+  
+          >
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6">
                 {editingProperty ? 'Editar propiedad' : 'Nueva propiedad'}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-sm font-medium">Nombre *</label>
-                  <Input
-                    value={form.name}
-                    onChange={(e) => updateForm('name', e.target.value)}
-                    placeholder="ej: Residencia Moderna Playas"
-                  />
+                  <Input value={form.name} onChange={(e) => updateForm('name', e.target.value)} placeholder="ej: Residencia Moderna Playas" />
                 </div>
 
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-sm font-medium">Ubicación *</label>
-                  <Input
-                    value={form.location}
-                    onChange={(e) => updateForm('location', e.target.value)}
-                    placeholder="ej: Playas de Tijuana, Sección Monumental"
-                  />
+                  <Input value={form.location} onChange={(e) => updateForm('location', e.target.value)} placeholder="ej: Playas de Tijuana, Sección Monumental" />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Ciudad *</label>
-                  <select
-                    value={form.city}
-                    onChange={(e) => updateForm('city', e.target.value)}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
+                  <select value={form.city} onChange={(e) => updateForm('city', e.target.value)} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                     <option value="Tijuana">Tijuana</option>
                     <option value="CDMX">CDMX</option>
                   </select>
@@ -248,11 +305,7 @@ export default function AdminProperties() {
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Tipo *</label>
-                  <select
-                    value={form.type}
-                    onChange={(e) => updateForm('type', e.target.value)}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
+                  <select value={form.type} onChange={(e) => updateForm('type', e.target.value)} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                     <option value="Casa">Casa</option>
                     <option value="Departamento">Departamento</option>
                     <option value="Terreno">Terreno</option>
@@ -262,11 +315,7 @@ export default function AdminProperties() {
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Etapa jurídica *</label>
-                  <select
-                    value={form.legal_stage}
-                    onChange={(e) => updateForm('legal_stage', e.target.value)}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  >
+                  <select value={form.legal_stage} onChange={(e) => updateForm('legal_stage', e.target.value)} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                     <option value="adjudicacion">Adjudicación</option>
                     <option value="remate">Remate</option>
                     <option value="dacion">Dación en Pago</option>
@@ -282,81 +331,33 @@ export default function AdminProperties() {
                 </div>
 
                 <div className="space-y-1">
-  <label className="text-sm font-medium">Precio comercial * (MXN)</label>
-  <Input
-    type="number"
-    min="0"
-    value={form.commercial_price}
-    onChange={(e) => updateForm('commercial_price', e.target.value)}
-    placeholder="4800000"
-  />
-</div>
-
-                <div className="space-y-1">
                   <label className="text-sm font-medium">Precio comercial * (MXN)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.commercial_price}
-                    onChange={(e) => updateForm('commercial_price', e.target.value)}
-                    placeholder="4800000"
-                  />
+                  <Input type="number" min="0" value={form.commercial_price} onChange={(e) => updateForm('commercial_price', e.target.value)} placeholder="4800000" />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Precio de remate * (MXN)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.auction_price}
-                    onChange={(e) => updateForm('auction_price', e.target.value)}
-                    placeholder="3360000"
-                  />
+                  <Input type="number" min="0" value={form.auction_price} onChange={(e) => updateForm('auction_price', e.target.value)} placeholder="3360000" />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Recámaras</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.bedrooms}
-                    onChange={(e) => updateForm('bedrooms', e.target.value)}
-                    placeholder="3"
-                  />
+                  <Input type="number" min="0" value={form.bedrooms} onChange={(e) => updateForm('bedrooms', e.target.value)} placeholder="3" />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Baños (permite 0.5, 1, 1.5, 2...)</label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={form.bathrooms}
-                    onChange={(e) => updateForm('bathrooms', e.target.value)}
-                    placeholder="1.5"
-                  />
+                  <label className="text-sm font-medium">Baños</label>
+                  <Input type="number" step="0.5" min="0" value={form.bathrooms} onChange={(e) => updateForm('bathrooms', e.target.value)} placeholder="1.5" />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Cajones de estacionamiento</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={form.parking}
-                    onChange={(e) => updateForm('parking', e.target.value)}
-                    placeholder="2"
-                  />
+                  <Input type="number" min="0" value={form.parking} onChange={(e) => updateForm('parking', e.target.value)} placeholder="2" />
                 </div>
 
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-sm font-medium">Descripción</label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => updateForm('description', e.target.value)}
-                    placeholder="Descripción detallada de la propiedad..."
-                    rows={4}
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+                  <textarea value={form.description} onChange={(e) => updateForm('description', e.target.value)} placeholder="Descripción detallada de la propiedad..." rows={4} className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
@@ -370,25 +371,14 @@ export default function AdminProperties() {
 
                 <div className="md:col-span-2 flex items-center gap-6">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.featured}
-                      onChange={(e) => updateForm('featured', e.target.checked)}
-                      className="w-4 h-4"
-                    />
+                    <input type="checkbox" checked={form.featured} onChange={(e) => updateForm('featured', e.target.checked)} className="w-4 h-4" />
                     <span className="text-sm font-medium">Destacada</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.active}
-                      onChange={(e) => updateForm('active', e.target.checked)}
-                      className="w-4 h-4"
-                    />
+                    <input type="checkbox" checked={form.active} onChange={(e) => updateForm('active', e.target.checked)} className="w-4 h-4" />
                     <span className="text-sm font-medium">Activa</span>
                   </label>
                 </div>
-
               </div>
 
               {formError && (
@@ -401,7 +391,7 @@ export default function AdminProperties() {
                 <Button onClick={handleSave} disabled={isSaving}>
                   {isSaving ? 'Guardando...' : editingProperty ? 'Guardar cambios' : 'Crear propiedad'}
                 </Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>
+                <Button variant="outline" onClick={() => { setShowForm(false); setEditingProperty(null) }}>
                   Cancelar
                 </Button>
               </div>
@@ -451,32 +441,19 @@ export default function AdminProperties() {
                       <p className="font-mono text-sm font-semibold text-primary">
                         ${Number(property.auction_price).toLocaleString('es-MX')}
                       </p>
-                      <p className="text-xs text-muted-foreground">{property.discount}% descuento</p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleToggleActive(property)}
-                        className="p-2 rounded-lg hover:bg-muted transition-colors"
-                        title={property.active ? 'Desactivar' : 'Activar'}
-                      >
+                      <button onClick={() => handleToggleActive(property)} className="p-2 rounded-lg hover:bg-muted transition-colors" title={property.active ? 'Desactivar' : 'Activar'}>
                         {property.active
                           ? <ToggleRight className="w-5 h-5 text-primary" />
                           : <ToggleLeft className="w-5 h-5 text-muted-foreground" />
                         }
                       </button>
-                      <button
-                        onClick={() => handleEdit(property)}
-                        className="p-2 rounded-lg hover:bg-muted transition-colors"
-                        title="Editar"
-                      >
+                      <button onClick={() => handleEdit(property)} className="p-2 rounded-lg hover:bg-muted transition-colors" title="Editar">
                         <Pencil className="w-4 h-4 text-muted-foreground" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(property.id)}
-                        className="p-2 rounded-lg hover:bg-destructive/10 transition-colors"
-                        title="Eliminar"
-                      >
+                      <button onClick={() => handleDelete(property.id)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Eliminar">
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </button>
                     </div>

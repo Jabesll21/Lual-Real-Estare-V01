@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Building2, ClipboardList, Users } from 'lucide-react'
 import { Card } from '@/components/ui/card'
-import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { sbFetch } from '@/lib/supabase'
 
 type CityTab = 'all' | 'Tijuana' | 'CDMX'
 
@@ -23,24 +23,39 @@ export default function Dashboard() {
     loadStats()
   }, [cityTab])
 
-  async function loadStats() {
-    setIsLoading(true)
+async function loadStats() {
+  setIsLoading(true)
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+    const token = authData ? JSON.parse(authData).access_token : supabaseKey
 
-    let propertiesQuery = supabase.from('properties').select('id, active, city')
-    if (cityTab !== 'all') propertiesQuery = propertiesQuery.eq('city', cityTab)
+    const headers = {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+    }
 
-    const [propertiesRes, diagnosisRes, recentDiagnosisRes, recentInterestsRes] = await Promise.all([
-      propertiesQuery,
-      supabase.from('diagnosis_submissions').select('id, status, created_at, city_interest'),
-      supabase.from('diagnosis_submissions').select('*').order('created_at', { ascending: false }).limit(5),
-      supabase.from('property_interests').select('*, properties(city)').order('created_at', { ascending: false }).limit(5),
+    let propertiesUrl = `${supabaseUrl}/rest/v1/properties?select=id,active,city`
+    if (cityTab !== 'all') propertiesUrl += `&city=eq.${cityTab}`
+
+    const [propsRes, diagRes, recentDiagRes, recentIntRes] = await Promise.all([
+      fetch(propertiesUrl, { headers }),
+      fetch(`${supabaseUrl}/rest/v1/diagnosis_submissions?select=id,status,created_at,city_interest`, { headers }),
+      fetch(`${supabaseUrl}/rest/v1/diagnosis_submissions?select=*&order=created_at.desc&limit=5`, { headers }),
+      fetch(`${supabaseUrl}/rest/v1/property_interests?select=*,properties(city,name)&order=created_at.desc&limit=5`, { headers }),
     ])
 
-    const properties = propertiesRes.data || []
-    let diagnosis = diagnosisRes.data || []
+    const [properties, diagnosis, recentDiagnosis, recentInterests] = await Promise.all([
+      propsRes.json(),
+      diagRes.json(),
+      recentDiagRes.json(),
+      recentIntRes.json(),
+    ])
 
+    let filteredDiagnosis = diagnosis || []
     if (cityTab !== 'all') {
-      diagnosis = diagnosis.filter(d =>
+      filteredDiagnosis = filteredDiagnosis.filter((d: any) =>
         cityTab === 'Tijuana'
           ? d.city_interest === 'tijuana' || d.city_interest === 'both'
           : d.city_interest === 'cdmx' || d.city_interest === 'both'
@@ -48,25 +63,31 @@ export default function Dashboard() {
     }
 
     setStats({
-      totalProperties: properties.length,
-      activeProperties: properties.filter(p => p.active).length,
-      totalDiagnosis: diagnosis.length,
-      newDiagnosis: diagnosis.filter(d => d.status === 'new').length,
+      totalProperties: (properties || []).length,
+      activeProperties: (properties || []).filter((p: any) => p.active).length,
+      totalDiagnosis: filteredDiagnosis.length,
+      newDiagnosis: filteredDiagnosis.filter((d: any) => d.status === 'new').length,
     })
 
-    let interests = recentInterestsRes.data || []
+    let interests = recentInterests || []
     if (cityTab !== 'all') {
-      interests = interests.filter(i => i.properties?.city === cityTab)
+      interests = interests.filter((i: any) => i.properties?.city === cityTab)
     }
 
     const combined = [
-      ...(recentDiagnosisRes.data || []).map(f => ({ ...f, tipo: 'Diagnóstico' })),
-      ...interests.map(f => ({ ...f, tipo: 'Propiedad' })),
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 8)
+      ...(recentDiagnosis || []).map((f: any) => ({ ...f, tipo: 'Diagnóstico' })),
+      ...interests.map((f: any) => ({ ...f, tipo: 'Propiedad' })),
+    ].sort((a: any, b: any) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ).slice(0, 8)
 
     setRecentForms(combined)
+  } catch (error) {
+    console.error('Error cargando stats:', error)
+  } finally {
     setIsLoading(false)
   }
+}
 
   const statCards = [
     { label: 'Propiedades activas', value: stats.activeProperties, total: stats.totalProperties, icon: Building2, color: 'text-primary', bg: 'bg-primary/10' },
@@ -129,7 +150,17 @@ export default function Dashboard() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="font-medium">{form.name}</p>
                       <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{form.tipo}</span>
-                      {form.property_name && <span className="text-xs text-muted-foreground">· {form.property_name}</span>}
+                      {form.property_name && (
+  <span className="text-xs text-muted-foreground">
+    · {form.property_name}
+  </span>
+)}
+{form.property_id && (
+  <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+    {form.property_id}
+  </span>
+)}
+                      
                     </div>
                     <p className="text-sm text-muted-foreground">{form.whatsapp}</p>
                   </div>
