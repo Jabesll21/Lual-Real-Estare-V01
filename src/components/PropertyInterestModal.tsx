@@ -248,6 +248,10 @@ export function PropertyInterestModal({ property, onClose }: PropertyInterestMod
                     )}
                   </div>
 
+                  <p className="text-xs text-muted-foreground text-center">
+  Para esta propiedad no aplica ningún tipo de crédito.
+</p>
+
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting || formData.hasCapital === 'no'}

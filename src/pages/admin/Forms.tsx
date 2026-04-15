@@ -24,44 +24,48 @@ export default function AdminForms() {
   }, [])
 
   async function loadForms() {
-    setIsLoading(true)
-    const [diagnosisRes, interestRes] = await Promise.all([
-      supabase
-        .from('diagnosis_submissions')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('property_interests')
-        .select('*')
-        .order('created_at', { ascending: false }),
-    ])
-    setDiagnosisForms(diagnosisRes.data || [])
-    setInterestForms(interestRes.data || [])
-    setIsLoading(false)
+  setIsLoading(true)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+  const headers = { 'apikey': supabaseKey, 'Authorization': `Bearer ${token}` }
+
+  const [diagRes, intRes] = await Promise.all([
+    fetch(`${supabaseUrl}/rest/v1/diagnosis_submissions?select=*&order=created_at.desc`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/property_interests?select=*&order=created_at.desc`, { headers }),
+  ])
+
+  const [diagnosis, interests] = await Promise.all([diagRes.json(), intRes.json()])
+  setDiagnosisForms(Array.isArray(diagnosis) ? diagnosis : [])
+  setInterestForms(Array.isArray(interests) ? interests : [])
+  setIsLoading(false)
+}
+
+const markAsReviewed = async (id: string, type: FormType) => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+  const table = type === 'diagnosis' ? 'diagnosis_submissions' : 'property_interests'
+
+  await fetch(`${supabaseUrl}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ status: 'reviewed' }),
+  })
+
+  if (type === 'diagnosis') {
+    setDiagnosisForms(prev => prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f))
+  } else {
+    setInterestForms(prev => prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f))
   }
-
-  const markAsReviewed = async (id: string, type: FormType) => {
-    const table = type === 'diagnosis' ? 'diagnosis_submissions' : 'property_interests'
-    const { error } = await supabase
-      .from(table)
-      .update({ status: 'reviewed' })
-      .eq('id', id)
-
-    if (error) {
-      alert('Error al actualizar: ' + error.message)
-      return
-    }
-
-    if (type === 'diagnosis') {
-      setDiagnosisForms(prev =>
-        prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f)
-      )
-    } else {
-      setInterestForms(prev =>
-        prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f)
-      )
-    }
-  }
+}
 
   // Combinar y etiquetar todos los formularios
   const allForms = [
@@ -281,7 +285,12 @@ export default function AdminForms() {
                           </div>
                           <div className="bg-muted/50 rounded-lg p-3 md:col-span-2">
                             <p className="text-xs text-muted-foreground mb-1">Propiedad de interés</p>
-                            <p className="text-sm font-medium">{form.property_name || 'Sin especificar'}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium">{form.property_name || 'Sin especificar'}</p>
+                              {form.property_id && (
+                                <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">{form.property_id}</span>
+                              )}
+                            </div>
                           </div>
                           <div className="bg-muted/50 rounded-lg p-3">
                             <p className="text-xs text-muted-foreground mb-1">Capital</p>

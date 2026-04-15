@@ -4,7 +4,6 @@ import { Plus, Trash2, Search } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { supabase } from '@/lib/supabase'
 import AdminLayout from './AdminLayout'
 import { formatPrice } from '@/lib/index'
 
@@ -23,24 +22,24 @@ export default function AdminPautas() {
     loadData()
   }, [])
 
-  async function loadData() {
-    setIsLoading(true)
-    const [pautasRes, propsRes] = await Promise.all([
-      supabase
-        .from('admin_pautas')
-        .select('*, properties(id, name, location, city, auction_price, legal_stage)')
-        .eq('active', true)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('properties')
-        .select('id, name, location, city, auction_price')
-        .eq('active', true)
-        .order('name'),
-    ])
-    setPautas(pautasRes.data || [])
-    setAllProperties(propsRes.data || [])
-    setIsLoading(false)
-  }
+ async function loadData() {
+  setIsLoading(true)
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const authData = localStorage.getItem('sb-jsadaigsymrbovdhiybq-auth-token')
+  const token = authData ? JSON.parse(authData).access_token : supabaseKey
+  const headers = { 'apikey': supabaseKey, 'Authorization': `Bearer ${token}` }
+
+  const [pautasRes, propsRes] = await Promise.all([
+    fetch(`${supabaseUrl}/rest/v1/admin_pautas?select=*,properties(id,name,location,city,auction_price,legal_stage,images)&active=eq.true&order=created_at.desc`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/properties?select=id,name,location,city,auction_price&active=eq.true&order=name.asc`, { headers }),
+  ])
+
+  const [pautas, props] = await Promise.all([pautasRes.json(), propsRes.json()])
+  setPautas(Array.isArray(pautas) ? pautas : [])
+  setAllProperties(Array.isArray(props) ? props : [])
+  setIsLoading(false)
+}
 
   const handleSave = async () => {
     if (!selectedPropertyId) return
@@ -144,11 +143,11 @@ export default function AdminPautas() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Seleccionar propiedad *</label>
                 <select
-                  value={selectedPropertyId}
-                  onChange={(e) => setSelectedPropertyId(e.target.value)}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                  size={5}
-                >
+  value={selectedPropertyId}
+  onChange={(e) => setSelectedPropertyId(e.target.value)}
+  className="w-full px-3 rounded-md border border-input bg-background text-sm h-48"
+  size={8}
+>
                   <option value="">Selecciona una propiedad...</option>
                   {availableProperties.map(p => (
                     <option key={p.id} value={p.id}>
@@ -210,6 +209,15 @@ export default function AdminPautas() {
                 <motion.div key={pauta.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <Card className="p-4">
                     <div className="flex items-start justify-between gap-4">
+                      {prop.images?.[0] && (
+                        <div className="w-24 h-20 shrink-0 rounded-md overflow-hidden">
+                          <img
+                            src={prop.images[0]}
+                            alt={prop.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-mono text-muted-foreground">{prop.id}</span>

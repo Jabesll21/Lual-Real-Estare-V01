@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
-import { supabase } from '@/lib/supabase'
 
 export default function AdvisorLogin() {
   const [email, setEmail] = useState('')
@@ -17,39 +16,61 @@ export default function AdvisorLogin() {
   const navigate = useNavigate()
 
   const handleSubmit = async () => {
-    if (!email || !password) {
-      setError('Por favor completa todos los campos')
+  if (!email || !password) {
+    setError('Por favor completa todos los campos')
+    return
+  }
+
+  setIsLoading(true)
+  setError('')
+
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+    // Login
+    const loginRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    })
+
+    if (!loginRes.ok) throw new Error('Credenciales incorrectas')
+    const session = await loginRes.json()
+
+    // Verificar que sea asesor
+    const profileRes = await fetch(
+      `${supabaseUrl}/rest/v1/advisor_profiles?select=*&id=eq.${session.user.id}`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      }
+    )
+
+    const profiles = await profileRes.json()
+    const profile = profiles?.[0]
+
+    if (!profile || !profile.active) {
+      setError('No tienes acceso como asesor. Contacta al administrador.')
       return
     }
 
-    setIsLoading(true)
-    setError('')
+    // Guardar sesión y perfil
+    localStorage.setItem('sb-jsadaigsymrbovdhiybq-auth-token', JSON.stringify(session))
+    localStorage.setItem('lual-advisor-profile', JSON.stringify(profile))
 
-    try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError) throw authError
-
-      // Verificar que sea asesor
-      const { data: session } = await supabase.auth.getSession()
-      const { data: profile } = await supabase
-        .from('advisor_profiles')
-        .select('*')
-        .eq('id', session.session?.user.id)
-        .single()
-
-      if (!profile || !profile.active) {
-        await supabase.auth.signOut()
-        setError('No tienes acceso como asesor. Contacta al administrador.')
-        return
-      }
-
-      navigate('/asesores/catalogo')
-    } catch (err) {
-      setError('Credenciales incorrectas. Verifica tu email y contraseña.')
-    } finally {
-      setIsLoading(false)
-    }
+    navigate('/asesores/catalogo')
+  } catch (err: any) {
+    setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

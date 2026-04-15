@@ -5,33 +5,50 @@ interface AuthContextType {
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
-  isLoading: true,
+  isLoading: false,
   login: async () => {},
-  logout: async () => {},
+  logout: () => {},
 })
 
 const INACTIVITY_TIMEOUT = 60 * 60 * 1000
+const AUTH_KEY = 'sb-jsadaigsymrbovdhiybq-auth-token'
+
+function getSessionFromStorage() {
+  try {
+    const data = localStorage.getItem(AUTH_KEY)
+    if (!data) return null
+    const parsed = JSON.parse(data)
+    if (!parsed?.access_token) return null
+    // Verificar que no haya expirado
+    if (parsed.expires_at && parsed.expires_at < Date.now() / 1000) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSessionFromStorage())
+  const [isLoading, setIsLoading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut()
-    setIsAuthenticated(false)
-  }, [])
+  const logout = useCallback(() => {
+  localStorage.removeItem(AUTH_KEY)
+  localStorage.removeItem('lual-auth')
+  setIsAuthenticated(false)
+  setTimeout(() => {
+    window.location.href = '/#/admin'
+  }, 100)
+}, [])
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      logout()
-    }, INACTIVITY_TIMEOUT)
+    timerRef.current = setTimeout(logout, INACTIVITY_TIMEOUT)
   }, [logout])
 
   useEffect(() => {
@@ -45,28 +62,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, resetTimer])
 
+  // Escuchar cambios en localStorage (cuando hace login)
   useEffect(() => {
-    // Verificar sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session)
-      setIsLoading(false)
-    }).catch(() => {
-      setIsAuthenticated(false)
-      setIsLoading(false)
-    })
-
-    // Escuchar cambios
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session)
-      setIsLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+    const handleStorage = () => {
+      setIsAuthenticated(!!getSessionFromStorage())
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+    setIsAuthenticated(true)
   }
 
   return (
