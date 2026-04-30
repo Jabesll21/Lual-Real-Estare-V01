@@ -36,7 +36,7 @@ function mapProperty(row: any) {
     },
     images: row.images && row.images.length > 0
       ? row.images
-      : ['https://images.unsplash.com/photo-1757439402186-86cf1d31c4df?w=1080'],
+      : ['https://images.unsplash.com/photo-1757439402186-86cf1d31c4df?w=800'],
     description: row.description || '',
     featured: row.featured || false,
   }
@@ -58,6 +58,42 @@ export async function getFeaturedProperties() {
     return data.map(mapProperty)
   } catch (error) {
     console.error('Error cargando propiedades destacadas:', error)
+    return []
+  }
+}
+
+export async function getHighlightedProperties() {
+  try {
+    const [entregaData, dictamenData] = await Promise.all([
+      querySupabase('properties', 'active=eq.true&legal_stage=eq.entrega_inmediata&order=created_at.desc'),
+      querySupabase('advisor_featured_sections', 'select=*,properties(*)&active=eq.true&section_type=eq.dictamen_positivo'),
+    ])
+
+    console.log('[dictamen raw]', dictamenData)
+    const entregaProps = entregaData.map(mapProperty)
+    const dictamenProps = (dictamenData as any[])
+      .map((row: any) => row.properties)
+      .filter(Boolean)
+      .map(mapProperty)
+
+    const seen = new Set<string>()
+    return [...entregaProps, ...dictamenProps].filter(p => {
+      if (seen.has(p.id)) return false
+      seen.add(p.id)
+      return true
+    })
+  } catch (error) {
+    console.error('Error cargando propiedades destacadas:', error)
+    return []
+  }
+}
+
+export async function getImmediateDeliveryProperties() {
+  try {
+    const data = await querySupabase('properties', 'active=eq.true&legal_stage=eq.entrega_inmediata&order=created_at.desc&limit=9')
+    return data.map(mapProperty)
+  } catch (error) {
+    console.error('Error cargando propiedades de entrega inmediata:', error)
     return []
   }
 }

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, TrendingUp, Clock, MapPin, Home, DollarSign } from 'lucide-react';
@@ -7,9 +6,6 @@ import { TestimonialCard } from '@/components/TestimonialCard';
 import { ROUTE_PATHS } from '@/lib/index';
 import { IMAGES } from '@/assets/images';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-type ProfileFilter = 'all' | 'principiante' | 'intermedio' | 'empresario';
 
 const caseStudies = [
   {
@@ -76,21 +72,8 @@ const insights = [
 ];
 
 export default function Results() {
-  const [profileFilter, setProfileFilter] = useState<ProfileFilter>('all');
-
-  const filteredCases = caseStudies.filter((caseStudy) => {
-    if (profileFilter === 'all') return true;
-    return caseStudy.investorProfile === profileFilter;
-  });
-
-  const filteredTestimonials = testimonials.filter((testimonial) => {
-    if (profileFilter === 'all') return true;
-    const profile = testimonial.profile.toLowerCase();
-    if (profileFilter === 'principiante') return profile.includes('principiante');
-    if (profileFilter === 'intermedio') return profile.includes('intermedio');
-    if (profileFilter === 'empresario') return profile.includes('empresario') || profile.includes('empresaria');
-    return false;
-  });
+  const filteredCases = caseStudies;
+  const filteredTestimonials = testimonials;
 
   return (
     <div className="min-h-screen">
@@ -115,26 +98,6 @@ export default function Results() {
 
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex justify-center mb-12"
-          >
-            <Tabs
-              value={profileFilter}
-              onValueChange={(value) => setProfileFilter(value as ProfileFilter)}
-              className="w-full max-w-2xl"
-            >
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all">Todos</TabsTrigger>
-                <TabsTrigger value="principiante">Principiante</TabsTrigger>
-                <TabsTrigger value="intermedio">Intermedio</TabsTrigger>
-                <TabsTrigger value="empresario">Empresario</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </motion.div>
-
           <div className="space-y-16">
             {filteredCases.map((caseStudy, index) => (
               <motion.div
@@ -150,6 +113,8 @@ export default function Results() {
                       src={caseStudy.propertyImage}
                       alt={caseStudy.propertyType}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute top-4 left-4">
                       <span className="inline-flex items-center gap-2 px-4 py-2 bg-background/90 backdrop-blur-sm rounded-full text-sm font-medium">
@@ -207,49 +172,7 @@ export default function Results() {
         </div>
       </section>
 
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-center">
-              Qué aprendimos en estos casos
-            </h2>
-            <p className="text-lg text-muted-foreground text-center mb-12">
-              Lecciones honestas de inversiones reales
-            </p>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {insights.map((insight, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-2">{insight.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {insight.description}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      
 
       <section className="py-16">
         <div className="container mx-auto px-4">
@@ -297,12 +220,12 @@ export default function Results() {
               ¿Listo para tu caso de éxito?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Descubre si los remates bancarios son para ti con un diagnóstico gratuito
+              Descubre si los remates bancarios son para ti con una asesoria personalizada
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-lg">
                 <Link to={ROUTE_PATHS.DIAGNOSIS}>
-                  Solicitar diagnóstico gratuito
+                  Solicitar asesoria personalizada
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
@@ -320,7 +243,7 @@ export default function Results() {
       <section className="py-8 bg-muted/50">
         <div className="container mx-auto px-4">
           <p className="text-center text-sm text-muted-foreground font-mono">
-            Pago de contado • Proceso legal • Tiempos variables
+            Pago de contado • Proceso legal • Certeza juridica
           </p>
         </div>
       </section>

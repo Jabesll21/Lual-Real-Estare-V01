@@ -201,12 +201,12 @@ export default function FAQ() {
                 className="h-14 px-8 text-base"
                 asChild
               >
-                <Link to={ROUTE_PATHS.DIAGNOSIS}>Solicitar diagnóstico gratuito</Link>
+                <Link to={ROUTE_PATHS.DIAGNOSIS}>Solicitar asesoría personalizada</Link>
               </Button>
             </div>
 
             <p className="mt-8 text-sm text-muted-foreground font-mono">
-              Tiempo de respuesta: 24-48 horas • Diagnóstico sin compromiso
+              Tiempo de respuesta: 24-48 horas • Asesoría personalizada 
             </p>
           </motion.div>
         </div>

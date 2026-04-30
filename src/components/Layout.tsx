@@ -109,7 +109,7 @@ export function Layout({ children }: LayoutProps) {
 
             <div className="hidden lg:flex items-center space-x-4">
               <Button asChild variant="outline" size="sm">
-                <Link to={ROUTE_PATHS.DIAGNOSIS}>Diagnóstico Gratuito</Link>
+                <Link to={ROUTE_PATHS.DIAGNOSIS}>Asesoria personalizada</Link>
               </Button>
               <Button asChild size="sm">
                 <a
@@ -162,7 +162,7 @@ export function Layout({ children }: LayoutProps) {
                       to={ROUTE_PATHS.DIAGNOSIS}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Diagnóstico Gratuito
+                      Asesoria personalizada
                     </Link>
                   </Button>
                   <Button asChild className="w-full">
@@ -329,7 +329,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="mt-12 pt-8 border-t border-border">
             <div className="bg-muted/50 rounded-lg p-6 mb-8">
               <p className="text-sm font-mono text-center text-muted-foreground">
-                Pago de contado • Proceso legal • Tiempos variables
+                Pago de contado • Proceso legal • Certeza jurídica
               </p>
             </div>
 

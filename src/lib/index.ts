@@ -13,7 +13,13 @@ export type LegalStage =
   | 'remate'
   | 'dacion'
   | 'preventa'
-  | 'escrituracion';
+  | 'escrituracion'
+  | 'etapa_inicial'
+  | 'ejecucion_sentencia'
+  | 'desahogo_pruebas'
+  | 'emplazamiento'
+  | 'entrega_inmediata'
+  | 'dacion_pagos';
 
 export const LEGAL_STAGES: Record<string, { label: string; color: string }> = {
   adjudicacion: {
@@ -75,7 +81,7 @@ export interface Property {
   name: string;
   location: string;
   city: 'Tijuana' | 'CDMX';
-  type: 'Casa' | 'Departamento' | 'Terreno' | 'Local Comercial';
+  type: 'Casa' | 'Departamento' | 'Terreno' | 'Local Comercial' | 'Edificio';
   legalStage: LegalStage;
   commercialPrice: number
   auctionPrice: number;

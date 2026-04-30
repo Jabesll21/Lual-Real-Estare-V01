@@ -310,6 +310,7 @@ export default function AdminProperties() {
                     <option value="Departamento">Departamento</option>
                     <option value="Terreno">Terreno</option>
                     <option value="Local Comercial">Local Comercial</option>
+                    <option value="Edificio">Edificio</option>
                   </select>
                 </div>
 

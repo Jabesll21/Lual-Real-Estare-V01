@@ -183,7 +183,7 @@ export function PropertyInterestModal({ property, onClose }: PropertyInterestMod
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Los remates bancarios requieren pago de contado. 
-                        Te recomendamos primero completar nuestro diagnóstico gratuito.
+                        Te recomendamos primero completar nuestra asesoría personalizada.
                       </p>
                     </div>
                   </motion.div>
@@ -249,8 +249,8 @@ export function PropertyInterestModal({ property, onClose }: PropertyInterestMod
                   </div>
 
                   <p className="text-xs text-muted-foreground text-center">
-  Para esta propiedad no aplica ningún tipo de crédito.
-</p>
+                      Para esta propiedad no aplica ningún tipo de crédito. Los tiempos de entrega no son inmediatos.
+                        </p>
 
                   <Button
                     onClick={handleSubmit}

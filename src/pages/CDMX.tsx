@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Building2, TrendingUp, Users, Phone, CheckCircle2 } from 'lucide-react';
+import { MapPin, Building2, TrendingUp, Users, Phone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PropertyCard } from '@/components/PropertyCard';
-import { properties } from '@/data/properties';
 import { faqCategories } from '@/data/faq';
-import { getWhatsAppLink } from '@/lib/index';
+import { getWhatsAppLink, Property, ROUTE_PATHS } from '@/lib/index';
+import { getPropertiesByCity } from '@/api/properties';
 import { IMAGES } from '@/assets/images';
 import {
   Accordion,
@@ -12,8 +14,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-
-const cdmxProperties = properties.filter((p) => p.city === 'CDMX');
 
 const cdmxFAQ = [
   {
@@ -94,17 +94,7 @@ const teamMembers = [
   },
 ];
 
-const marketData = [
-  {
-    label: 'Oportunidades activas',
-    value: '15+',
-    description: 'Inmuebles verificados en proceso',
-  },
-  {
-    label: 'Zonas de operación',
-    value: '6',
-    description: 'Alcaldías con presencia activa',
-  },
+const staticMarketData = [
   {
     label: 'Descuento promedio',
     value: '30%',
@@ -112,15 +102,34 @@ const marketData = [
   },
   {
     label: 'Tiempo promedio',
-    value: '12-18 meses',
+    value: '6-24 meses',
     description: 'Desde selección hasta escrituración',
   },
 ];
 
 export default function CDMX() {
+  const [cdmxProperties, setCdmxProperties] = useState<Property[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getPropertiesByCity('CDMX').then((data) => {
+      if (mounted) setCdmxProperties(data);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const marketData = [
+    {
+      label: 'Oportunidades activas',
+      value: cdmxProperties.length > 0 ? String(cdmxProperties.length) : '—',
+      description: 'Inmuebles verificados en proceso',
+    },
+    ...staticMarketData,
+  ];
+
   const whatsappMessage =
     'Hola, me interesa conocer más sobre las oportunidades de inversión en remates bancarios en CDMX. ¿Podrían proporcionarme información?';
-  const whatsappLink = getWhatsAppLink(whatsappMessage);
+  const whatsappLink = getWhatsAppLink(whatsappMessage, '525666888089');
 
   return (
     <div className="min-h-screen">
@@ -130,6 +139,8 @@ export default function CDMX() {
             src={IMAGES.HERO_PROPERTY_5}
             alt="CDMX Real Estate"
             className="w-full h-full object-cover opacity-30"
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70" />
         </div>
@@ -141,15 +152,7 @@ export default function CDMX() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6"
-            >
-              <MapPin className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Expansión 2025</span>
-            </motion.div>
+          
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight">
               LUAL en Ciudad de México
@@ -191,7 +194,7 @@ export default function CDMX() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="grid md:grid-cols-3 gap-6 mb-16 max-w-4xl mx-auto">
             {marketData.map((item, index) => (
               <motion.div
                 key={index}
@@ -208,34 +211,7 @@ export default function CDMX() {
             ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="mb-12"
-          >
-            <h3 className="text-3xl font-bold mb-8 text-center">Zonas de oportunidad</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {opportunityZones.map((zone, index) => {
-                const Icon = zone.icon;
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    className="bg-card p-6 rounded-xl border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
-                  >
-                    <Icon className="w-8 h-8 text-primary mb-4" />
-                    <h4 className="text-xl font-semibold mb-2">{zone.name}</h4>
-                    <p className="text-muted-foreground">{zone.description}</p>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
+          
         </div>
       </section>
 
@@ -250,37 +226,56 @@ export default function CDMX() {
           >
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Oportunidades activas en CDMX</h2>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Inmuebles verificados en zonas premium. Cada oportunidad pasa por nuestro filtro de 7
-              puntos de due diligence.
+              Inmuebles verificados en entrega inmediata, dación en pago y adjudicación.
             </p>
           </motion.div>
 
-          {cdmxProperties.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              {cdmxProperties.map((property, index) => (
-                <motion.div
-                  key={property.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                >
-                  <PropertyCard property={property} />
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-xl text-muted-foreground mb-6">
-                Actualmente estamos actualizando el inventario de CDMX.
-              </p>
-              <Button asChild>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  Solicitar oportunidades disponibles
-                </a>
-              </Button>
-            </div>
-          )}
+          {(() => {
+            const featured = cdmxProperties
+              .filter((p) => p.legalStage === 'entrega_inmediata' || p.legalStage === 'dacion_pagos' || p.legalStage === 'adjudicacion')
+              .slice(0, 3);
+            return featured.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                {featured.map((property, index) => (
+                  <motion.div
+                    key={property.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1, duration: 0.5 }}
+                  >
+                    <PropertyCard property={property} />
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-xl text-muted-foreground mb-6">
+                  Actualmente estamos actualizando el inventario de CDMX.
+                </p>
+                <Button asChild>
+                  <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                    Solicitar oportunidades disponibles
+                  </a>
+                </Button>
+              </div>
+            );
+          })()}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mt-4 mb-12"
+          >
+            <Button size="lg" asChild>
+              <Link to={`${ROUTE_PATHS.OPPORTUNITIES}?city=CDMX`}>
+                Ver todas las oportunidades en CDMX
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </Button>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -294,7 +289,7 @@ export default function CDMX() {
             </p>
             <Button size="lg" asChild>
               <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                Solicitar diagnóstico personalizado
+                Solicitar una Asesoria Personalizada
               </a>
             </Button>
           </motion.div>
@@ -303,45 +298,6 @@ export default function CDMX() {
 
       <section className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Equipo LUAL CDMX</h2>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              Profesionales con experiencia local en derecho inmobiliario, análisis técnico, y
-              gestión de operaciones.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {teamMembers.map((member, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="bg-card rounded-xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-all duration-300"
-              >
-                <div className="aspect-square bg-muted relative overflow-hidden">
-                  <img
-                    src={IMAGES.TEAM_PROFESSIONAL_7}
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-1">{member.name}</h3>
-                  <p className="text-primary font-medium mb-2">{member.role}</p>
-                  <p className="text-sm text-muted-foreground">{member.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -355,9 +311,9 @@ export default function CDMX() {
               <div>
                 <h3 className="text-2xl font-bold mb-2">Presencia real en CDMX</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Nuestro equipo en Ciudad de México opera desde oficinas físicas, con presencia en
+                  Nuestro equipo en Ciudad de México opera desde oficinas físicas, con alianzas en
                   juzgados, bancos, y notarías. No somos un portal remoto: somos una firma local con
-                  experiencia nacional.
+                  inventario nacional.
                 </p>
               </div>
             </div>
@@ -434,7 +390,7 @@ export default function CDMX() {
               ¿Listo para invertir en CDMX?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Contacta a nuestro equipo en Ciudad de México. Te proporcionamos diagnóstico gratuito
+              Contacta a nuestro equipo en Ciudad de México. Te proporcionamos asesoria personalizada
               y oportunidades verificadas según tu perfil de inversión.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -456,7 +412,7 @@ export default function CDMX() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-sm text-muted-foreground font-mono">
-              Pago de contado • Proceso legal • Tiempos variables • Operación exclusiva CDMX
+              Pago de contado • Proceso legal • Certeza jurídica
             </p>
           </div>
         </div>

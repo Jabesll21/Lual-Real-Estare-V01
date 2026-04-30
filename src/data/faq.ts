@@ -27,10 +27,6 @@ export const faqCategories: FAQCategory[] = [
         answer: "Sí, es completamente legal. Los remates bancarios están regulados por el Código de Comercio y la Ley de Instituciones de Crédito en México. Son procesos judiciales supervisados por autoridades competentes. LUAL verifica la legalidad de cada oportunidad antes de presentarla."
       },
       {
-        question: "¿Qué riesgos existen en un remate?",
-        answer: "Los principales riesgos son: tiempos variables del proceso legal (8-24 meses), posibles adeudos de predial o mantenimiento, estado físico del inmueble, y complejidad administrativa. Por eso LUAL realiza due diligence exhaustivo: análisis legal, verificación de adeudos, inspección física, y validación de documentos antes de presentar cualquier oportunidad."
-      },
-      {
         question: "¿Puedo usar crédito bancario para comprar en remate?",
         answer: "No. Los remates bancarios requieren pago de contado. No aplica financiamiento bancario, crédito Infonavit, ni mensualidades. Esta es una inversión para personas con capital disponible o acceso a liquidez inmediata."
       }
@@ -46,11 +42,7 @@ export const faqCategories: FAQCategory[] = [
       },
       {
         question: "¿Cuáles son las etapas del proceso?",
-        answer: "1) Diagnóstico inicial y perfil de inversión. 2) Selección de oportunidad verificada. 3) Análisis legal y técnico profundo. 4) Preparación de oferta y documentación. 5) Participación en remate judicial. 6) Adjudicación y pago. 7) Escrituración y entrega física. LUAL te acompaña en todas las etapas con transparencia total."
-      },
-      {
-        question: "¿Qué pasa si no gano el remate?",
-        answer: "Si tu oferta no es la ganadora, recuperas tu depósito en garantía sin penalización. LUAL te presenta nuevas oportunidades que coincidan con tu perfil de inversión. No hay costo por participar en remates no ganados, solo inviertes tiempo en el análisis previo."
+        answer: "1) Solicitud inicial y perfil de inversión. 2) Selección de oportunidad verificada. 3) Análisis legal y técnico profundo. 4) Preparación de oferta y documentación. 5) Participación en remate judicial. 6) Adjudicación y pago. 7) Escrituración y entrega física. LUAL te acompaña en todas las etapas con transparencia total."
       },
       {
         question: "¿Puedo visitar la propiedad antes de ofertar?",
@@ -67,12 +59,8 @@ export const faqCategories: FAQCategory[] = [
     title: "Sobre costos y tiempos",
     items: [
       {
-        question: "¿Cuánto debo invertir inicialmente?",
-        answer: "Además del precio de remate, considera: depósito en garantía (10-20% del valor), gastos notariales (3-5%), impuestos de adquisición (2-3%), posibles adeudos de predial o mantenimiento, y costos de reparación si aplica. LUAL te proporciona desglose completo de costos antes de cualquier compromiso."
-      },
-      {
         question: "¿Cuánto cobra LUAL por sus servicios?",
-        answer: "LUAL cobra honorarios únicamente si la operación se concreta exitosamente (modelo de éxito compartido). No hay costos por diagnóstico inicial, análisis de oportunidades, o participación en remates no ganados. Los honorarios se definen claramente antes de iniciar el proceso y se pagan al momento de la escrituración."
+        answer: "LUAL cobra honorarios únicamente si la operación se concreta exitosamente (modelo de éxito compartido). No hay costos por solicitud inicial, análisis de oportunidades, o participación en remates no ganados. Los honorarios se definen claramente antes de iniciar el proceso y se pagan al momento de la escrituración."
       },
       {
         question: "¿Hay costos ocultos?",

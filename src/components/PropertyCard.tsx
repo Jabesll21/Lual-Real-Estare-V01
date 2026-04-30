@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Property, formatPrice, LEGAL_STAGES } from "@/lib/index";
+import { Property, formatPrice } from "@/lib/index";
 import { motion } from "framer-motion";
 import { MapPin, Bed, Bath, Car, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { PropertyInterestModal } from '@/components/PropertyInterestModal'
 
@@ -14,11 +13,6 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, onClick }: PropertyCardProps) {
   const [showModal, setShowModal] = useState(false)
-  const legalStageInfo = LEGAL_STAGES[property.legalStage] || {
-    label: property.legalStage,
-    color: 'bg-slate-100 text-slate-700 border-slate-300'
-  }
-
   const handleMoreInfo = () => {
     if (onClick) {
       onClick()
@@ -42,13 +36,10 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
               src={property.images[0]}
               alt={property.name}
               className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-            <div className="absolute top-4 left-4">
-              <Badge className={`${legalStageInfo.color} border font-mono text-xs px-3 py-1`}>
-                {legalStageInfo.label}
-              </Badge>
-            </div>
           </div>
 
           <CardContent className="p-6 space-y-4">

@@ -22,7 +22,7 @@ export function WhatsAppButton({ message }: WhatsAppButtonProps) {
       return "Hola, me interesa conocer las oportunidades de inversión en remates bancarios en Ciudad de México.";
     }
     if (path.includes("diagnostico")) {
-      return "Hola, me gustaría solicitar un diagnóstico gratuito para evaluar si los remates bancarios son para mí.";
+      return "Hola, me gustaría solicitar un Asesoramiento personalizado para evaluar la mejor oportunidad para mí.";
     }
     if (path.includes("resultados")) {
       return "Hola, vi los casos de éxito y me gustaría conocer más sobre cómo LUAL puede ayudarme a invertir en remates.";

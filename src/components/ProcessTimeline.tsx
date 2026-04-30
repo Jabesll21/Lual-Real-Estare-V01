@@ -22,7 +22,7 @@ const steps: TimelineStep[] = [
   {
     id: 1,
     icon: FileSearch,
-    title: "Diagnóstico inicial",
+    title: "Solicitud inicial",
     description:
       "Evaluamos tu perfil de inversión, capital disponible y objetivos. Definimos el tipo de oportunidad que buscas y tu horizonte temporal.",
     duration: "1-2 días",

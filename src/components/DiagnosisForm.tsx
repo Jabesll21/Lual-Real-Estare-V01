@@ -122,13 +122,13 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
           >
             <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-accent" />
           </motion.div>
-          <h3 className="text-2xl font-semibold mb-3">¡Diagnóstico enviado!</h3>
+          <h3 className="text-2xl font-semibold mb-3">¡Solicitud enviada!</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Gracias por tu interés. Nuestro equipo revisará tu perfil y te contactará por WhatsApp en las próximas 48 horas.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => window.open('https://wa.me/526632007261?text=Hola%2C%20acabo%20de%20completar%20el%20diagn%C3%B3stico')}
+              onClick={() => window.open('https://wa.me/526632007261?text=Hola%2C%20acabo%20de%20completar%20la%20asesoría%20personalizada%20y%20me%20gustaría%20saber%20cuáles%20son%20mis%20opciones%20de%20inversión.', '_blank')}
               className="gap-2"
             >
               Contactar por WhatsApp
@@ -290,31 +290,10 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-2xl font-semibold mb-2">Intención de inversión</h3>
-                  <p className="text-muted-foreground">Últimos detalles para personalizar tu diagnóstico</p>
+                  <p className="text-muted-foreground">Últimos detalles para personalizar tu solicitud</p>
                 </div>
                 <div className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-base">Horizonte temporal</Label>
-                    <RadioGroup
-                      value={formData.timeHorizon}
-                      onValueChange={(value) => updateField('timeHorizon', value)}
-                    >
-                      {[
-                        { value: '0-6', label: '0-6 meses (urgente)' },
-                        { value: '6-12', label: '6-12 meses' },
-                        { value: '12-24', label: '12-24 meses' },
-                        { value: '24+', label: 'Más de 24 meses (flexible)' },
-                      ].map((option) => (
-                        <div key={option.value} className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                          <RadioGroupItem value={option.value} id={`horizon-${option.value}`} />
-                          <Label htmlFor={`horizon-${option.value}`} className="flex-1 cursor-pointer font-normal">
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                    {errors.timeHorizon && <p className="text-sm text-destructive">{errors.timeHorizon}</p>}
-                  </div>
+                  
 
                   <div className="space-y-3">
                     <Label className="text-base">Ciudad de interés</Label>
@@ -361,7 +340,7 @@ export function DiagnosisForm({ onSuccess }: DiagnosisFormProps) {
                   disabled={isLoading}
                   className="flex-1 gap-2"
                 >
-                  {isLoading ? 'Enviando...' : 'Enviar Diagnóstico'}
+                  {isLoading ? 'Enviando...' : 'Enviar Solicitud'}
                   <CheckCircle2 className="w-4 h-4" />
                 </Button>
               )}

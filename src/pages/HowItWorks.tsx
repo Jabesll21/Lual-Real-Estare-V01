@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ProcessTimeline } from '@/components/ProcessTimeline';
 import { ROUTE_PATHS } from '@/lib/index';
 import { IMAGES } from '@/assets/images';
 
@@ -36,22 +35,17 @@ const dueDiligenceFilters = [
   {
     icon: FileText,
     title: 'Análisis Legal',
-    description: 'Revisión exhaustiva de escrituras, gravámenes y situación jurídica',
-  },
-  {
-    icon: Search,
-    title: 'Inspección Física',
-    description: 'Evaluación del estado real del inmueble y necesidades de inversión',
+    description: 'Revisión exhaustiva gravámenes y situación jurídica',
   },
   {
     icon: TrendingUp,
     title: 'Valuación Comercial',
-    description: 'Comparativa de mercado y potencial de apreciación',
+    description: 'Comparativa de precio en el mercado y valor de remate',
   },
   {
     icon: Shield,
-    title: 'Verificación de Adeudos',
-    description: 'Confirmación de predial, mantenimiento y servicios al corriente',
+    title: 'Verificación de Gravamen',
+    description: 'Analisis y verifiacion de gravamen hipotecario',
   },
   {
     icon: Users,
@@ -61,12 +55,12 @@ const dueDiligenceFilters = [
   {
     icon: Clock,
     title: 'Tiempos del Proceso',
-    description: 'Estimación realista de duración según etapa legal',
+    description: 'Estimación realista de duración según etapa juridica',
   },
   {
     icon: AlertTriangle,
     title: 'Evaluación de Riesgos',
-    description: 'Identificación de banderas rojas y mitigación de riesgos',
+    description: 'Identificamos las mejores oportunidades para proteger tu inversión',
   },
 ];
 
@@ -74,7 +68,6 @@ const idealProfile = [
   { label: 'Inversionista con capital disponible', isIdeal: true },
   { label: 'Horizonte de inversión 12-24 meses', isIdeal: true },
   { label: 'Interés en oportunidades de descuento real', isIdeal: true },
-  { label: 'Disposición a proceso legal formal', isIdeal: true },
   { label: 'Busca acompañamiento profesional', isIdeal: true },
   { label: 'Comprende que no es entrega inmediata', isIdeal: true },
 ];
@@ -130,10 +123,8 @@ export default function HowItWorks() {
               <h2 className="text-4xl font-bold mb-6">¿Qué es un remate bancario?</h2>
               <div className="prose prose-lg max-w-none">
                 <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                  Un remate bancario es un proceso legal mediante el cual una institución
-                  financiera recupera un inmueble que fue garantía de un crédito no pagado.
-                  El banco busca recuperar su inversión vendiendo la propiedad, generalmente
-                  con descuento respecto al valor comercial.
+                 Son propiedades que se dejaron como garantía de una credito en una institución bancaria.
+                  El banco, para recuperar su inversión pone a la venta los derechos de cobro para que  mediante un proceso jurídico se llegue a la adjudicación de la propiedad.
                 </p>
               </div>
             </motion.div>
@@ -201,25 +192,6 @@ export default function HowItWorks() {
         </div>
       </section>
 
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="max-w-5xl mx-auto"
-            initial="initial"
-            animate="animate"
-            variants={fadeInUp}
-          >
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">Etapas del proceso legal</h2>
-              <p className="text-xl text-muted-foreground">
-                7 pasos desde el diagnóstico hasta la escrituración
-              </p>
-            </div>
-            <ProcessTimeline />
-          </motion.div>
-        </div>
-      </section>
-
       <section className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
           <motion.div
@@ -229,7 +201,7 @@ export default function HowItWorks() {
             variants={staggerContainer}
           >
             <motion.div variants={fadeInUp} className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">¿Qué esperar?</h2>
+              <h2 className="text-4xl font-bold mb-4">Lo que debes saber</h2>
               <p className="text-xl text-muted-foreground">
                 Expectativas realistas sobre tiempos, costos y proceso
               </p>
@@ -265,7 +237,7 @@ export default function HowItWorks() {
               <Card className="p-8 border-destructive/20 bg-destructive/5">
                 <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <AlertTriangle className="w-8 h-8 text-destructive" />
-                  ¿Qué NO esperar?
+                  Toma en cuenta que:
                 </h3>
                 <ul className="space-y-4 text-muted-foreground">
                   <li className="flex items-start gap-3">
@@ -315,7 +287,7 @@ export default function HowItWorks() {
             <motion.div variants={fadeInUp} className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">¿Cómo opera LUAL?</h2>
               <p className="text-xl text-muted-foreground">
-                7 filtros de due diligence para cada oportunidad
+                 6 filtros que analiza Lual para cada oportunidad
               </p>
             </motion.div>
 
@@ -345,13 +317,11 @@ export default function HowItWorks() {
               >
                 <div className="absolute inset-0 bg-background/90 backdrop-blur-sm rounded-2xl" />
                 <div className="relative z-10">
-                  <p className="text-lg text-muted-foreground mb-4">
-                    Cada oportunidad pasa por estos 7 filtros antes de presentarse a
+                  <p className="text-lg text-black mb-4">
+                    Cada oportunidad pasa por estos 6 filtros antes de presentarse a
                     inversionistas.
                   </p>
-                  <p className="text-xl font-semibold">
-                    Si no cumple con nuestros estándares, no la ofrecemos.
-                  </p>
+                 
                 </div>
               </div>
             </motion.div>
@@ -370,7 +340,7 @@ export default function HowItWorks() {
             <motion.div variants={fadeInUp} className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">¿Para quién es?</h2>
               <p className="text-xl text-muted-foreground">
-                Perfil ideal vs perfil no recomendado
+                Perfil Inversión vs Perfil Patrimonial
               </p>
             </motion.div>
 
@@ -378,7 +348,7 @@ export default function HowItWorks() {
               <Card className="p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <CheckCircle2 className="w-8 h-8 text-accent" />
-                  <h3 className="text-2xl font-bold">Perfil Ideal</h3>
+                  <h3 className="text-2xl font-bold">Perfil Inversión</h3>
                 </div>
                 <ul className="space-y-4">
                   {idealProfile.map((item, index) => (
@@ -393,7 +363,7 @@ export default function HowItWorks() {
               <Card className="p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <XCircle className="w-8 h-8 text-destructive" />
-                  <h3 className="text-2xl font-bold">No Recomendado</h3>
+                  <h3 className="text-2xl font-bold">Perfil Patrimonial</h3>
                 </div>
                 <ul className="space-y-4">
                   {notIdealProfile.map((item, index) => (
@@ -413,7 +383,7 @@ export default function HowItWorks() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-lg font-mono text-primary">
-              Pago de contado • Proceso legal • Tiempos variables
+              Pago de contado • Proceso legal • Certeza juridica
             </p>
           </div>
         </div>
@@ -431,12 +401,12 @@ export default function HowItWorks() {
               ¿Listo para descubrir si los remates son para ti?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Solicita un diagnóstico gratuito y sin compromiso. Te contactamos en 48 horas.
+              Solicita una asesoria personalizada y uno de nuestros asesores se comunicará contigo.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-lg px-8">
                 <Link to={ROUTE_PATHS.DIAGNOSIS}>
-                  Diagnóstico Gratuito
+                  Asesoria personalizada
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>

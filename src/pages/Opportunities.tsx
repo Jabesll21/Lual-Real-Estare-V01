@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Home, Building2, Store, Landmark } from 'lucide-react';
 import { Property, ROUTE_PATHS } from '@/lib/index';
 import { getProperties } from '@/api/properties';
@@ -17,20 +17,22 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 type CityFilter = 'all' | 'Tijuana' | 'CDMX';
-type PropertyTypeFilter = 'all' | 'Casa' | 'Departamento' | 'Terreno' | 'Local Comercial';
+type PropertyTypeFilter = 'all' | 'Casa' | 'Departamento' | 'Local Comercial' | 'Edificio';
 type PriceRangeFilter = 'all' | '0-500k' | '500k-1m' | '1m-2m' | '2m-5m' | '5m-10m' | '10m+';
-type LegalStageFilter = 'all' | 'adjudicacion' | 'remate' | 'dacion' | 'preventa' | 
-  'escrituracion' | 'etapa_inicial' | 'ejecucion_sentencia' | 'desahogo_pruebas' | 
-  'emplazamiento' | 'entrega_inmediata' | 'dacion_pagos'
+//type LegalStageFilter = 'all' | 'adjudicacion' | 'remate' | 'dacion' | 'preventa' | 
+  //'escrituracion' | 'etapa_inicial' | 'ejecucion_sentencia' | 'desahogo_pruebas' | 
+  //'emplazamiento' | 'entrega_inmediata' | 'dacion_pagos'
 
 export default function Opportunities() {
-  const [cityFilter, setCityFilter] = useState<CityFilter>('all');
+  const [searchParams] = useSearchParams();
+  const initialCity = (searchParams.get('city') as CityFilter) || 'all';
+
+  const [cityFilter, setCityFilter] = useState<CityFilter>(initialCity);
   const [typeFilter, setTypeFilter] = useState<PropertyTypeFilter>('all');
   const [priceFilter, setPriceFilter] = useState<PriceRangeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProperties, setLoadingProperties] = useState(true)
-  const [legalFilter, setLegalFilter] = useState<LegalStageFilter>('all')
 
   useEffect(() => {
   let mounted = true
@@ -47,7 +49,7 @@ export default function Opportunities() {
     return properties.filter((property) => {
       if (cityFilter !== 'all' && property.city !== cityFilter) return false;
       if (typeFilter !== 'all' && property.type !== typeFilter) return false;
-      if (legalFilter !== 'all' && property.legalStage !== legalFilter) return false;
+      
 
       if (priceFilter !== 'all') {
         const price = property.auctionPrice;
@@ -84,7 +86,7 @@ export default function Opportunities() {
 
       return true;
     });
-  }, [properties, cityFilter, typeFilter, legalFilter, priceFilter, searchQuery]);
+  }, [properties, cityFilter, typeFilter, priceFilter, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +112,7 @@ export default function Opportunities() {
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground font-mono">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Pago de contado • Proceso legal • Tiempos variables
+              Pago de contado • Proceso legal • Certeza jurídica
             </div>
           </motion.div>
         </div>
@@ -178,44 +180,21 @@ export default function Opportunities() {
                         Departamento
                       </div>
                     </SelectItem>
-                    <SelectItem value="Terreno">
-                      <div className="flex items-center gap-2">
-                        <Landmark className="w-4 h-4" />
-                        Terreno
-                      </div>
-                    </SelectItem>
                     <SelectItem value="Local Comercial">
                       <div className="flex items-center gap-2">
                         <Store className="w-4 h-4" />
                         Local Comercial
                       </div>
                     </SelectItem>
+                    <SelectItem value="Edificio">
+                      <div className="flex items-center gap-2">
+                        <Landmark className="w-4 h-4" />
+                        Edificio
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="flex-1">
-  <label className="block text-sm font-medium mb-2">Etapa jurídica</label>
-  <Select value={legalFilter} onValueChange={(v) => setLegalFilter(v as LegalStageFilter)}>
-    <SelectTrigger>
-      <SelectValue placeholder="Todas las etapas" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="all">Todas las etapas</SelectItem>
-      <SelectItem value="adjudicacion">Adjudicación</SelectItem>
-      <SelectItem value="remate">Remate</SelectItem>
-      <SelectItem value="dacion">Dación en Pago</SelectItem>
-      <SelectItem value="preventa">Preventa</SelectItem>
-      <SelectItem value="escrituracion">Escrituración</SelectItem>
-      <SelectItem value="etapa_inicial">Etapa Inicial</SelectItem>
-      <SelectItem value="ejecucion_sentencia">Ejecución de Sentencia</SelectItem>
-      <SelectItem value="desahogo_pruebas">Desahogo de Pruebas</SelectItem>
-      <SelectItem value="emplazamiento">Emplazamiento</SelectItem>
-      <SelectItem value="entrega_inmediata">Entrega Inmediata</SelectItem>
-      <SelectItem value="dacion_pagos">Dación en Pagos</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
 
               <div className="flex-1">
                 <label className="block text-sm font-medium mb-2">Rango de precio</label>
@@ -328,7 +307,7 @@ export default function Opportunities() {
                 ¿No encuentras lo que buscas?
               </p>
               <p className="text-sm text-muted-foreground">
-                Solicita un diagnóstico personalizado y te ayudamos a encontrar la oportunidad ideal
+                Solicita una asesoria personalizada y te ayudamos a encontrar la oportunidad ideal
               </p>
             </div>
             <div className="flex gap-3">
@@ -336,7 +315,7 @@ export default function Opportunities() {
                 <Link to={ROUTE_PATHS.HOW_IT_WORKS}>Cómo funciona</Link>
               </Button>
               <Button asChild>
-                <Link to={ROUTE_PATHS.DIAGNOSIS}>Diagnóstico gratuito</Link>
+                <Link to={ROUTE_PATHS.DIAGNOSIS}>Asesoria personalizada</Link>
               </Button>
             </div>
           </div>

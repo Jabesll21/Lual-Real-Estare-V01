@@ -8,11 +8,6 @@ interface TestimonialCardProps {
     city: string;
     text: string;
     rating: number;
-    investment: {
-      amount: string;
-      savings: string;
-      timeframe: string;
-    };
   };
 }
 
@@ -59,17 +54,6 @@ export function TestimonialCard({ testimonial }: TestimonialCardProps) {
             <p className="text-sm text-muted-foreground">{testimonial.city}</p>
           </div>
 
-          <div className="text-right">
-            <p className="text-sm font-mono text-muted-foreground mb-1">
-              Inversión: {testimonial.investment.amount}
-            </p>
-            <p className="text-sm font-mono text-accent font-semibold mb-1">
-              Ahorro: {testimonial.investment.savings}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {testimonial.investment.timeframe}
-            </p>
-          </div>
         </div>
       </div>
     </motion.div>

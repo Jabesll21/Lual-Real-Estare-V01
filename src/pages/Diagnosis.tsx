@@ -20,13 +20,13 @@ export default function Diagnosis() {
       icon: FileCheck,
       title: "Recomendación de tipo de remate",
       description:
-        "Te orientamos sobre qué etapa legal (adjudicación, remate judicial, dación) se ajusta mejor a tu perfil de riesgo y horizonte temporal.",
+        "Te orientamos sobre qué etapa legal se ajusta mejor a tu perfil.",
     },
     {
       icon: CheckCircle2,
       title: "Oportunidades que coincidan",
       description:
-        "Si tu perfil es compatible, te presentamos propiedades verificadas que se ajusten a tu presupuesto y ciudad de interés.",
+        "Te presentamos propiedades verificadas que se ajusten a tu presupuesto y ciudad de interés.",
     },
     {
       icon: Clock,
@@ -51,7 +51,7 @@ export default function Diagnosis() {
               Descubre si los remates son para ti
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Diagnóstico gratuito y sin compromiso. Te contactamos en 48 horas.
+              Asesoria personalizada sin compromiso.
             </p>
           </motion.div>
 
@@ -78,11 +78,10 @@ export default function Diagnosis() {
             className="max-w-3xl mx-auto text-center mb-16"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 tracking-tight">
-              Qué incluye el diagnóstico
+              Qué incluye la asesoria personalizada
             </h2>
             <p className="text-lg text-muted-foreground">
-              Un análisis completo para determinar si los remates bancarios son la
-              inversión correcta para tu situación.
+              Un análisis completo para determinar la mejor opcion para ti.
             </p>
           </motion.div>
 
@@ -131,7 +130,7 @@ export default function Diagnosis() {
               Inversionistas que empezaron aquí
             </h2>
             <p className="text-lg text-muted-foreground">
-              Casos reales de personas que solicitaron su diagnóstico y hoy son
+              Casos reales de personas que solicitaron su asesoria personalizada y hoy son
               propietarios.
             </p>
           </motion.div>
@@ -169,15 +168,11 @@ export default function Diagnosis() {
                 Garantía de privacidad
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                Tus datos están protegidos bajo la Ley Federal de Protección de
-                Datos Personales en Posesión de Particulares. No compartimos tu
-                información con terceros.
-              </p>
-              <p className="text-sm text-muted-foreground font-mono">
-                Solo usamos tu información para contactarte sobre oportunidades de
+               No compartimos tu información con terceros. Solo usamos tu información para contactarte sobre oportunidades de
                 inversión en remates bancarios. Puedes solicitar la eliminación de
                 tus datos en cualquier momento.
               </p>
+              
             </div>
           </motion.div>
         </div>
@@ -192,11 +187,9 @@ export default function Diagnosis() {
             transition={{ duration: 0.6 }}
             className="max-w-4xl mx-auto text-center"
           >
-            <p className="text-sm font-mono text-muted-foreground uppercase tracking-wider mb-2">
-              Disclaimer obligatorio
-            </p>
+           
             <p className="text-base text-foreground font-medium">
-              Pago de contado • Proceso legal • Tiempos variables
+              Pago de contado • Proceso legal • Certeza juridica
             </p>
           </motion.div>
         </div>
